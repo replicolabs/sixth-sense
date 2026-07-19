@@ -17,7 +17,9 @@
  * until the missing link is built.
  */
 import { PrismaClient } from "@sixth-sense/db";
-import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import bs58 from "bs58";
 import { loadRootEnv } from "./env";

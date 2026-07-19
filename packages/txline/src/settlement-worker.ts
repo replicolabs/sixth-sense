@@ -18,7 +18,9 @@
  * init_user's payer/owner split (payer = service wallet if the player has
  * no UserRecord yet, owner = the player).
  */
-import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl, Program as ProgramType } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { getOrActivateSession } from "./auth";
 import { getStatValidationV1 } from "./client";
@@ -60,7 +62,7 @@ export interface SettleFinalOutcomeResult {
 }
 
 async function ensureUserRecord(
-  program: Program,
+  program: ProgramType,
   connection: Connection,
   serviceWallet: Keypair,
   owner: PublicKey,

@@ -4,7 +4,9 @@
  * join_pool transaction actually happened, rather than trusting whatever
  * amount the client claims to have staked.
  */
-import { AnchorProvider, Program, Wallet, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl, Program as ProgramType } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet } = anchorPkg;
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { stakePda } from "./pool-pdas";
 import sixthSenseIdl from "../../../target/idl/sixth_sense.json" with { type: "json" };
@@ -20,7 +22,7 @@ export interface OnChainStakeAccount {
   claimed: boolean;
 }
 
-function readonlyProgram(rpcUrl: string): Program {
+function readonlyProgram(rpcUrl: string): ProgramType {
   const connection = new Connection(rpcUrl, "confirmed");
   // Read-only lookups never sign anything, so any keypair works as the
   // AnchorProvider's nominal wallet.

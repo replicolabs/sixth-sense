@@ -8,7 +8,9 @@
  *
  * Usage: pnpm --filter @sixth-sense/txline check-pricing
  */
-import { AnchorProvider, Program, Wallet, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet } = anchorPkg;
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import { loadTxLineConfig } from "./config";

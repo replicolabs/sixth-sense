@@ -15,7 +15,9 @@
  * only real, free, currently-live row — override via TXLINE_SERVICE_LEVEL_ID
  * if that ever changes.
  */
-import { AnchorProvider, Program, type Idl, Wallet } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet } = anchorPkg;
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,

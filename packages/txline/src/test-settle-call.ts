@@ -12,7 +12,9 @@
  *   TEST_RPC_URL=https://api.devnet.solana.com pnpm --filter @sixth-sense/txline test-settle-call
  *     -> real devnet. Costs real (test) SOL for fees.
  */
-import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 import {
   ComputeBudgetProgram,
   Connection,

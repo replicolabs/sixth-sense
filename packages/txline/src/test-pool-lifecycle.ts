@@ -8,7 +8,9 @@
  * Usage: TEST_RPC_URL=https://api.devnet.solana.com \
  *   pnpm --filter @sixth-sense/txline test-pool-lifecycle
  */
-import { AnchorProvider, Program, Wallet, BN, type Idl } from "@coral-xyz/anchor";
+import anchorPkg from "@coral-xyz/anchor";
+import type { Idl, Program as ProgramType, BN as BNType } from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 import {
   createMint,
   getOrCreateAssociatedTokenAccount,
@@ -56,7 +58,7 @@ async function fundWithSol(connection: Connection, serviceWallet: Keypair, to: P
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function poolPda(poolId: BN) {
+function poolPda(poolId: BNType) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("pool"), poolId.toArrayLike(Buffer, "le", 8)],
     SIXTH_SENSE_PROGRAM_ID,
@@ -77,7 +79,7 @@ function resultPda(pool: PublicKey) {
 function userRecordPda(owner: PublicKey) {
   return PublicKey.findProgramAddressSync([Buffer.from("user"), owner.toBuffer()], SIXTH_SENSE_PROGRAM_ID)[0];
 }
-function callRecordPda(owner: PublicKey, callId: BN) {
+function callRecordPda(owner: PublicKey, callId: BNType) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("call"), owner.toBuffer(), callId.toArrayLike(Buffer, "le", 8)],
     SIXTH_SENSE_PROGRAM_ID,
@@ -85,7 +87,7 @@ function callRecordPda(owner: PublicKey, callId: BN) {
 }
 
 async function settleRealCallFor(
-  program: Program,
+  program: ProgramType,
   player: Keypair,
   proof: Awaited<ReturnType<typeof getStatValidationV1>>,
   awardedPoints: number,
