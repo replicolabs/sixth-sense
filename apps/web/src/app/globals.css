@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+:root {
+  /* Canvas (warm cream) */
+  --cream: #F6F2E9;
+  --cream-elevated: #FBF8F1;
+  --cream-sunken: #EFE9DC;
+
+  /* Brand green (the pitch) */
+  --pine-900: #0A2A20;
+  --pine-800: #0E3B2E;
+  --pine-700: #144D3B;
+  --pine-600: #1C6A50;
+  --pine-500: #2A8768;
+
+  /* Live / action accent (electric volt lime) */
+  --volt-600: #A6D019;
+  --volt-500: #C6F135;
+  --volt-400: #D7F86A;
+
+  /* Reward / streak (warm gold) */
+  --gold-600: #E09B1E;
+  --gold-500: #F4B740;
+
+  /* Semantic */
+  --win: #34C97A;
+  --loss: #EC6A4E;
+
+  /* Ink (green-tinted neutrals) */
+  --ink-900: #12241C;
+  --ink-700: #33463E;
+  --ink-500: #5E6E66;
+  --ink-400: #8A968F;
+  --hairline: rgba(18, 36, 28, 0.08);
+
+  /* Glass */
+  --glass-light: rgba(251, 248, 241, 0.55);
+  --glass-dark: rgba(14, 59, 46, 0.42);
+  --glass-stroke: rgba(255, 255, 255, 0.50);
+  --glass-shadow: 0 8px 32px rgba(10, 42, 32, 0.14);
+
+  /* Radii */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  --background: var(--cream);
+  --foreground: var(--ink-900);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bricolage);
+}
+
+body {
+  background: var(--cream);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  position: relative;
+  min-height: 100%;
+}
+
+/*
+ * Section 10.3: glass looks dead over flat white, so the canvas needs a
+ * soft radial mesh (a pine glow bleeding from one corner, a pine vignette
+ * at the edges) plus a very faint grain, for glass panels to actually
+ * refract against. Fixed + behind everything, never intercepts clicks.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 55% at 88% -8%, color-mix(in oklab, var(--pine-500) 42%, transparent), transparent),
+    radial-gradient(ellipse 65% 50% at -5% 105%, color-mix(in oklab, var(--pine-500) 30%, transparent), transparent),
+    radial-gradient(ellipse 55% 40% at 100% 100%, color-mix(in oklab, var(--volt-500) 12%, transparent), transparent),
+    radial-gradient(ellipse 140% 100% at 50% 50%, transparent 45%, color-mix(in oklab, var(--pine-700) 20%, transparent) 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Light glass panel recipe (Section 10.3), applied over the cream canvas.
+ * Use for floating elements — prediction card, nav, toasts, HUD. Keep
+ * list content on solid cream (--cream-sunken etc) so it stays readable
+ * and so we don't stack more backdrop-filter layers than the page needs.
+ */
+.glass-panel {
+  background: var(--glass-light);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-stroke);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/*
+ * Dark glass variant for the live match hero over the pitch background
+ * (Section 10.3). White text on top.
+ */
+.glass-panel-dark {
+  background: var(--glass-dark);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/*
+ * "Faint pitch feel" background for the match hero (Section 10.3): soft
+ * horizontal light bands plus a slightly stronger green vignette, so the
+ * dark glass sitting on top has something to refract against instead of
+ * being flat pine.
+ */
+.pitch-backdrop {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 2px,
+      transparent 2px,
+      transparent 22px
+    ),
+    radial-gradient(ellipse 120% 90% at 50% 30%, var(--pine-600), var(--pine-900) 85%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .breathing {
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,1356 @@
+{
+  "address": "5eLFecutwEdSSF5v3FpKbnUpNL4YVD1mmBuZnFMRbUt9",
+  "metadata": {
+    "name": "sixth_sense",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "docs": [
+    "CLAUDE.md Section 9: records each user's resolved call as a trustless",
+    "result, proven against TxLINE data via CPI into TxOracle's",
+    "`validate_stat`. Devnet only for this build (see constants.rs).",
+    "",
+    "EXPANSION.md Section 4 extends the same program with real-money weekly",
+    "staking pools (create_pool/join_pool/lock_pool/record_pool_score/",
+    "settle_pool/claim_payout) that settle against the CallRecord PDAs this",
+    "base settlement already produces — no separate oracle needed."
+  ],
+  "instructions": [
+    {
+      "name": "claim_payout",
+      "discriminator": [
+        127,
+        240,
+        132,
+        62,
+        227,
+        198,
+        146,
+        133
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool_config",
+          "writable": true
+        },
+        {
+          "name": "stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool_config"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "pool_config"
+          ]
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_pool",
+      "discriminator": [
+        233,
+        146,
+        209,
+        142,
+        207,
+        104,
+        64,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "address": "8chhKXi72DVVZGUydubPTFom54kgfS5isEWTRyNS5eYU"
+        },
+        {
+          "name": "pool_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pool_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Vault's SPL \"authority\" is `pool_config` itself (EXPANSION.md",
+            "Section 4.4: \"authority is the PoolConfig PDA itself, not a company",
+            "wallet\") — its own address is just a deterministic PDA for lookup,",
+            "derived off `pool_config` rather than the vault's own authority."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "pool_id",
+          "type": "u64"
+        },
+        {
+          "name": "min_stake",
+          "type": "u64"
+        },
+        {
+          "name": "rake_bps",
+          "type": "u16"
+        },
+        {
+          "name": "min_participants",
+          "type": "u32"
+        },
+        {
+          "name": "curve_k_x100",
+          "type": "u16"
+        },
+        {
+          "name": "paid_percent_bps",
+          "type": "u16"
+        },
+        {
+          "name": "week_start",
+          "type": "i64"
+        },
+        {
+          "name": "week_end",
+          "type": "i64"
+        },
+        {
+          "name": "fixture_ids",
+          "type": {
+            "vec": "i64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "init_user",
+      "discriminator": [
+        14,
+        51,
+        68,
+        159,
+        237,
+        78,
+        158,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "is used, to derive and stamp the PDA it owns."
+          ]
+        },
+        {
+          "name": "user_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "join_pool",
+      "discriminator": [
+        14,
+        65,
+        62,
+        16,
+        116,
+        17,
+        195,
+        107
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool_config",
+          "writable": true
+        },
+        {
+          "name": "stake_account",
+          "docs": [
+            "`init`-only, never `init_if_needed` — a second `join_pool` from the",
+            "same wallet on the same pool fails because this PDA already exists,",
+            "which is EXPANSION.md Section 4.3's \"one wallet, one entry per",
+            "pool\" enforced as simply as possible."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool_config"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "pool_config"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "lock_pool",
+      "discriminator": [
+        154,
+        202,
+        217,
+        175,
+        178,
+        161,
+        30,
+        152
+      ],
+      "accounts": [
+        {
+          "name": "pool_config",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_pool_score",
+      "discriminator": [
+        57,
+        236,
+        152,
+        91,
+        224,
+        25,
+        138,
+        48
+      ],
+      "accounts": [
+        {
+          "name": "pool_config"
+        },
+        {
+          "name": "stake_account",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_call",
+      "discriminator": [
+        58,
+        230,
+        6,
+        58,
+        104,
+        245,
+        154,
+        227
+      ],
+      "accounts": [
+        {
+          "name": "settler",
+          "docs": [
+            "The authorized backend settler (CLAUDE.md Section 8) — not",
+            "necessarily the player; it pays for CallRecord's rent."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user_record.owner",
+                "account": "UserRecord"
+              }
+            ]
+          }
+        },
+        {
+          "name": "call_record",
+          "docs": [
+            "`init` alone is enough to prevent double-settling the same",
+            "call_id — a second attempt fails with Anchor's own",
+            "account-already-in-use error."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user_record.owner",
+                "account": "UserRecord"
+              },
+              {
+                "kind": "arg",
+                "path": "call_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "txoracle_program"
+        },
+        {
+          "name": "daily_scores_merkle_roots"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "call_id",
+          "type": "u64"
+        },
+        {
+          "name": "fixture_id",
+          "type": "i64"
+        },
+        {
+          "name": "ts",
+          "type": "i64"
+        },
+        {
+          "name": "fixture_summary",
+          "type": {
+            "defined": {
+              "name": "ScoresBatchSummary"
+            }
+          }
+        },
+        {
+          "name": "fixture_proof",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ProofNode"
+              }
+            }
+          }
+        },
+        {
+          "name": "main_tree_proof",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ProofNode"
+              }
+            }
+          }
+        },
+        {
+          "name": "predicate",
+          "type": {
+            "defined": {
+              "name": "TraderPredicate"
+            }
+          }
+        },
+        {
+          "name": "stat_a",
+          "type": {
+            "defined": {
+              "name": "StatTerm"
+            }
+          }
+        },
+        {
+          "name": "stat_b",
+          "type": {
+            "option": {
+              "defined": {
+                "name": "StatTerm"
+              }
+            }
+          }
+        },
+        {
+          "name": "op",
+          "type": {
+            "option": {
+              "defined": {
+                "name": "BinaryExpression"
+              }
+            }
+          }
+        },
+        {
+          "name": "claimed_outcome",
+          "type": "bool"
+        },
+        {
+          "name": "awarded_points",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "settle_pool",
+      "discriminator": [
+        186,
+        11,
+        231,
+        111,
+        242,
+        241,
+        203,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool_config",
+          "writable": true
+        },
+        {
+          "name": "pool_result",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CallRecord",
+      "discriminator": [
+        148,
+        38,
+        165,
+        144,
+        4,
+        159,
+        90,
+        121
+      ]
+    },
+    {
+      "name": "PoolConfig",
+      "discriminator": [
+        26,
+        108,
+        14,
+        123,
+        116,
+        230,
+        129,
+        43
+      ]
+    },
+    {
+      "name": "PoolResult",
+      "discriminator": [
+        145,
+        81,
+        108,
+        26,
+        117,
+        172,
+        113,
+        69
+      ]
+    },
+    {
+      "name": "StakeAccount",
+      "discriminator": [
+        80,
+        158,
+        67,
+        124,
+        50,
+        189,
+        192,
+        255
+      ]
+    },
+    {
+      "name": "UserRecord",
+      "discriminator": [
+        210,
+        252,
+        132,
+        218,
+        191,
+        85,
+        173,
+        167
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidMerkleRootsAccount",
+      "msg": "The daily_scores_merkle_roots account does not match the derived PDA for this call's timestamp"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidTxOracleProgram",
+      "msg": "The txoracle_program account does not match the expected TxOracle program id"
+    },
+    {
+      "code": 6002,
+      "name": "MissingCpiReturnData",
+      "msg": "TxOracle's validate_stat CPI did not return a value"
+    },
+    {
+      "code": 6003,
+      "name": "StakingDisabled",
+      "msg": "Staking pools are disabled at the code level (STAKING_ENABLED = false)"
+    },
+    {
+      "code": 6004,
+      "name": "NotAdmin",
+      "msg": "Only the admin wallet may call this instruction"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidPoolWindow",
+      "msg": "week_start must be strictly before week_end"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidFixtureCount",
+      "msg": "A pool needs at least one fixture, and no more than MAX_POOL_FIXTURES"
+    },
+    {
+      "code": 6007,
+      "name": "PoolWindowAlreadyStarted",
+      "msg": "week_start has already passed — a pool can't be opened for a gameweek that's already started"
+    },
+    {
+      "code": 6008,
+      "name": "PoolNotOpen",
+      "msg": "This pool is not open for new stakes"
+    },
+    {
+      "code": 6009,
+      "name": "GameweekAlreadyStarted",
+      "msg": "The gameweek's first match has already kicked off — staking has closed"
+    },
+    {
+      "code": 6010,
+      "name": "StakeBelowMinimum",
+      "msg": "Stake amount is below this pool's configured minimum"
+    },
+    {
+      "code": 6011,
+      "name": "PoolNotYetLockable",
+      "msg": "This pool has not reached its lock time yet"
+    },
+    {
+      "code": 6012,
+      "name": "PoolNotLocked",
+      "msg": "This pool is not locked"
+    },
+    {
+      "code": 6013,
+      "name": "CallRecordOwnerMismatch",
+      "msg": "This CallRecord does not belong to the user being scored"
+    },
+    {
+      "code": 6014,
+      "name": "FixtureNotInPool",
+      "msg": "This CallRecord's fixture is not part of this pool's gameweek"
+    },
+    {
+      "code": 6015,
+      "name": "AlreadyScored",
+      "msg": "This user's pool score has already been recorded"
+    },
+    {
+      "code": 6016,
+      "name": "GameweekNotYetEnded",
+      "msg": "The gameweek window has not ended yet — matches may still be in progress"
+    },
+    {
+      "code": 6017,
+      "name": "IncompleteScoring",
+      "msg": "Every participant's pool score must be recorded before settling"
+    },
+    {
+      "code": 6018,
+      "name": "StakeAccountPoolMismatch",
+      "msg": "A StakeAccount passed into settle_pool does not belong to this pool"
+    },
+    {
+      "code": 6019,
+      "name": "PoolAlreadySettled",
+      "msg": "This pool has already been settled or cancelled"
+    },
+    {
+      "code": 6020,
+      "name": "PoolNotSettled",
+      "msg": "This pool has not been settled yet"
+    },
+    {
+      "code": 6021,
+      "name": "AlreadyClaimed",
+      "msg": "This payout has already been claimed"
+    }
+  ],
+  "types": [
+    {
+      "name": "BinaryExpression",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Add"
+          },
+          {
+            "name": "Subtract"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallRecord",
+      "docs": [
+        "seeds = [CALL_SEED, user_pubkey, call_id] (CLAUDE.md Section 9).",
+        "Stores enough of the predicate to audit \"what was checked\" without",
+        "keeping the (large, only transiently useful) Merkle proof data on",
+        "chain permanently."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "fixture_id",
+            "type": "i64"
+          },
+          {
+            "name": "stat_key_a",
+            "type": "u32"
+          },
+          {
+            "name": "stat_key_b",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "op",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "BinaryExpression"
+                }
+              }
+            }
+          },
+          {
+            "name": "comparison",
+            "type": {
+              "defined": {
+                "name": "Comparison"
+              }
+            }
+          },
+          {
+            "name": "threshold",
+            "type": "i32"
+          },
+          {
+            "name": "claimed_outcome",
+            "type": "bool"
+          },
+          {
+            "name": "proven_outcome",
+            "type": "bool"
+          },
+          {
+            "name": "awarded_points",
+            "type": "u64"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Comparison",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "GreaterThan"
+          },
+          {
+            "name": "LessThan"
+          },
+          {
+            "name": "EqualTo"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolConfig",
+      "docs": [
+        "seeds = [POOL_SEED, pool_id.to_le_bytes()].",
+        "",
+        "`week_start` doubles as the \"no live/finished matches\" gate for both",
+        "`create_pool` and `join_pool` (EXPANSION.md Section 4.1): it MUST be set",
+        "to the EARLIEST kickoff among `fixture_ids`, so checking",
+        "`now < week_start` is sufficient to guarantee none of the gameweek's",
+        "matches have started yet, without the program needing a live oracle",
+        "lookup per fixture."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_id",
+            "type": "u64"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "min_stake",
+            "type": "u64"
+          },
+          {
+            "name": "rake_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_participants",
+            "type": "u32"
+          },
+          {
+            "name": "curve_k_x100",
+            "docs": [
+              "Payout curve exponent k, fixed-point as `k * 100` (e.g. 150 = 1.5)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "paid_percent_bps",
+            "docs": [
+              "Fraction of participants who get paid, in basis points (e.g. 2000 = 20%)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "week_start",
+            "type": "i64"
+          },
+          {
+            "name": "week_end",
+            "type": "i64"
+          },
+          {
+            "name": "fixture_ids",
+            "type": {
+              "vec": "i64"
+            }
+          },
+          {
+            "name": "participant_count",
+            "type": "u32"
+          },
+          {
+            "name": "total_staked",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "PoolStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolResult",
+      "docs": [
+        "seeds = [RESULT_SEED, pool.key()]. One aggregate record written by",
+        "`settle_pool` — per-participant rank/payout live on each `StakeAccount`",
+        "instead of a rankings[] vec here, since a single account can't hold an",
+        "unbounded list for an arbitrarily large pool."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "settled_at",
+            "type": "i64"
+          },
+          {
+            "name": "total_pool",
+            "type": "u64"
+          },
+          {
+            "name": "rake_amount",
+            "type": "u64"
+          },
+          {
+            "name": "distributable_pot",
+            "type": "u64"
+          },
+          {
+            "name": "paid_count",
+            "type": "u32"
+          },
+          {
+            "name": "cancelled",
+            "docs": [
+              "True if the pool missed `min_participants` and every stake was",
+              "refunded in full instead of ranked."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolStatus",
+      "docs": [
+        "EXPANSION.md Section 4.1/4.4."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Locked"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProofNode",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "is_right_sibling",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoreStat",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": "u32"
+          },
+          {
+            "name": "value",
+            "type": "i32"
+          },
+          {
+            "name": "period",
+            "type": "i32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoresBatchSummary",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fixture_id",
+            "type": "i64"
+          },
+          {
+            "name": "update_stats",
+            "type": {
+              "defined": {
+                "name": "ScoresUpdateStats"
+              }
+            }
+          },
+          {
+            "name": "events_sub_tree_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ScoresUpdateStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "update_count",
+            "type": "i32"
+          },
+          {
+            "name": "min_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "max_timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeAccount",
+      "docs": [
+        "seeds = [STAKE_SEED, pool.key(), user_pubkey]. `init`-only (never",
+        "`init_if_needed`) so a second `join_pool` call from the same wallet on",
+        "the same pool fails outright — the simplest possible enforcement of",
+        "EXPANSION.md Section 4.3's \"one wallet, one entry per pool.\""
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_staked",
+            "type": "u64"
+          },
+          {
+            "name": "joined_at",
+            "type": "i64"
+          },
+          {
+            "name": "pool_points",
+            "docs": [
+              "Written once by `record_pool_score`, guarded by `scored`."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "scored",
+            "type": "bool"
+          },
+          {
+            "name": "rank",
+            "docs": [
+              "1-indexed; 0 means unranked (pool cancelled, or not yet settled)."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "payout_amount",
+            "docs": [
+              "Either a pari-mutuel payout share, or a full refund if the pool",
+              "was cancelled for missing the `min_participants` floor."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StatTerm",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stat_to_prove",
+            "type": {
+              "defined": {
+                "name": "ScoreStat"
+              }
+            }
+          },
+          {
+            "name": "event_stat_root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "stat_proof",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ProofNode"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TraderPredicate",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "threshold",
+            "type": "i32"
+          },
+          {
+            "name": "comparison",
+            "type": {
+              "defined": {
+                "name": "Comparison"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRecord",
+      "docs": [
+        "seeds = [USER_SEED, user_pubkey] (CLAUDE.md Section 9)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "points",
+            "type": "u64"
+          },
+          {
+            "name": "wins",
+            "type": "u32"
+          },
+          {
+            "name": "losses",
+            "type": "u32"
+          },
+          {
+            "name": "current_streak",
+            "type": "u32"
+          },
+          {
+            "name": "best_streak",
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "CALL_SEED",
+      "type": "bytes",
+      "value": "[99, 97, 108, 108]"
+    },
+    {
+      "name": "DAILY_SCORES_ROOTS_SEED",
+      "docs": [
+        "TxOracle's daily Merkle root PDA seed (confirmed against the real",
+        "txodds/tx-on-chain TypeScript examples, not guessed — it is NOT",
+        "documented in CLAUDE.md beyond \"epoch-day derived, u16 little-endian\")."
+      ],
+      "type": "bytes",
+      "value": "[100, 97, 105, 108, 121, 95, 115, 99, 111, 114, 101, 115, 95, 114, 111, 111, 116, 115]"
+    },
+    {
+      "name": "POOL_SEED",
+      "type": "bytes",
+      "value": "[112, 111, 111, 108]"
+    },
+    {
+      "name": "RESULT_SEED",
+      "type": "bytes",
+      "value": "[114, 101, 115, 117, 108, 116]"
+    },
+    {
+      "name": "STAKE_SEED",
+      "type": "bytes",
+      "value": "[115, 116, 97, 107, 101]"
+    },
+    {
+      "name": "USER_SEED",
+      "type": "bytes",
+      "value": "[117, 115, 101, 114]"
+    },
+    {
+      "name": "VAULT_SEED",
+      "type": "bytes",
+      "value": "[118, 97, 117, 108, 116]"
+    }
+  ]
+}

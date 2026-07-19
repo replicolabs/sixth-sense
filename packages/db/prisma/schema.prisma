@@ -1,0 +1,285 @@
+// Sixth Sense data model — CLAUDE.md Section 7, extended with the
+// avatar/kit system from EXPANSION.md Section 1. Postgres per CLAUDE.md
+// Section 4 ("DB (light): Postgres... via Prisma").
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MatchMode {
+  live
+  replay
+}
+
+enum CardChoice {
+  yes
+  no
+}
+
+enum CardOutcome {
+  win
+  loss
+  void
+}
+
+enum SettlementStatus {
+  pending
+  proven
+  failed
+}
+
+/// EXPANSION.md Section 1.3 — how a kit unlock was earned. EXPANSION's own
+/// enum listing (streak | xp | matchesPlayed | event) has no value for its
+/// own "lifetime 50 correct calls" example tier — added `wins` rather than
+/// overloading `event` for something that isn't actually a one-off event.
+enum UnlockSource {
+  streak
+  wins
+  xp
+  matchesPlayed
+  event
+}
+
+/// EXPANSION.md Section 1.1 — never a forced binary.
+enum Presentation {
+  male
+  female
+  neutral
+}
+
+model User {
+  id            String   @id @default(cuid())
+  privyId       String   @unique
+  /// Hidden plumbing, never shown in the default UI (CLAUDE.md Section 8).
+  walletAddress String   @unique
+  nickname      String
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  /// Folded onto User per CLAUDE.md Section 7's own note ("can live on User").
+  currentStreak Int      @default(0)
+  bestStreak    Int      @default(0)
+  /// EXPANSION.md Section 1.3 milestone tracking — "lifetime 50 correct
+  /// calls" and "play 10 different matches" are both lifetime, not
+  /// per-session, so they live here rather than on MatchSession.
+  lifetimeWins          Int @default(0)
+  lifetimeMatchesPlayed Int @default(0)
+  /// CLAUDE.md Section 7's LeaderboardRow ("points") and Section 11.5's
+  /// leaderboard both need a persisted lifetime total — session points
+  /// only ever lived in the client's Zustand store until this field
+  /// existed (Phase 6 was never wired up before).
+  lifetimePoints Int @default(0)
+  createdAt     DateTime @default(now())
+
+  avatar      Avatar?
+  kitUnlocks  KitUnlock[]
+  sessions    MatchSession[]
+  predictions Prediction[]
+  stakeEntries StakeEntry[]
+}
+
+/// EXPANSION.md Section 1.1. One avatar per user — the rich customization
+/// system supersedes CLAUDE.md's original flat `avatarId` field.
+model Avatar {
+  id                   String        @id @default(cuid())
+  userId               String        @unique
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skinTone             String
+  hairStyle            String
+  hairColor            String
+  facialHair           String
+  presentation         Presentation
+  /// ISO country code — sets the default flag and unlocks that nation's kit.
+  nationalityCode      String
+  equippedKitId        String?
+  equippedAccessoryIds String[]
+  updatedAt            DateTime      @updatedAt
+}
+
+/// EXPANSION.md Section 1.3.
+model KitUnlock {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId      String
+  unlockedVia UnlockSource
+  unlockedAt DateTime     @default(now())
+
+  @@unique([userId, kitId])
+}
+
+model MatchSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fixtureId    String
+  mode         MatchMode
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  pointsTotal  Int       @default(0)
+  bestStreak   Int       @default(0)
+  callsMade    Int       @default(0)
+  callsWon     Int       @default(0)
+
+  predictions Prediction[]
+
+  @@index([userId])
+  @@index([fixtureId])
+}
+
+model Prediction {
+  id               String           @id @default(cuid())
+  sessionId        String
+  session          MatchSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fixtureId        String
+  cardType         String
+  question         String
+  /// Null when the card expired unanswered (personalOutcome "void" in
+  /// gameStore.ts) — still worth recording for accurate "calls made" vs
+  /// "cards shown" stats, but there's no real choice to store.
+  choice           CardChoice?
+  windowStartSeq   Int
+  windowEndTs      BigInt
+  resolvedSeq      Int?
+  outcome          CardOutcome?
+  basePoints       Int
+  multiplier       Float
+  awardedPoints    Int
+  settlementStatus SettlementStatus @default(pending)
+  settlementSig    String?
+  createdAt        DateTime         @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+/// EXPANSION.md Section 2.3 — self-built, TxLINE-only archive. Every row
+/// here came from our own live capture before TxLINE's ~2-week historical
+/// window closed, so every archived match keeps full "Provably Fair"
+/// capability (Section 2.3: "no exceptions and nothing to caveat in the
+/// UI"). `searchVector` is a generated tsvector column + GIN index added
+/// by hand in the migration SQL — Prisma's schema DSL has no native
+/// tsvector type, so it's modeled as `Unsupported` here (present so
+/// `prisma db pull`/introspection doesn't fight the real column) and the
+/// actual generated-column logic lives in the migration itself.
+model ArchivedMatch {
+  id                String   @id @default(cuid())
+  fixtureId         String   @unique
+  competition       String
+  competitionId     String
+  season            String
+  participant1      String
+  participant2      String
+  participant1Score Int
+  participant2Score Int
+  kickoffDate       DateTime
+  /// Path under /fixtures to the cached full event stream (cache-fixture.ts).
+  eventStreamRef    String
+  /// Path to a cached representative stat-validation proof, nullable until captured.
+  proofsRef         String?
+  /// Editorial tags: comeback, derby, final, upset, etc.
+  tags              String[]
+  archivedAt        DateTime @default(now())
+
+  searchVector Unsupported("tsvector")?
+
+  @@index([competition])
+  @@index([participant1])
+  @@index([participant2])
+}
+
+enum PoolStatus {
+  open
+  locked
+  settled
+  cancelled
+}
+
+/// EXPANSION.md Section 4 — off-chain mirror of the on-chain `PoolConfig`
+/// PDA (programs/sixth-sense/src/pool_state.rs), kept for fast list/browse
+/// reads. The chain is always the source of truth for money; this table
+/// exists so the Pools UI never has to fan out RPC calls just to render a
+/// list. Kept in sync by whatever process calls create_pool/lock_pool/
+/// settle_pool on chain (see api/pools sync endpoint).
+model Pool {
+  id                String     @id @default(cuid())
+  /// The u64 pool_id passed to create_pool, as a string (BigInt-safe, and
+  /// simpler to use as a URL param than the PDA address).
+  poolIdOnChain     String     @unique
+  poolConfigAddress String     @unique
+  vaultAddress      String
+  tokenMint         String
+  /// Human label for the gameweek (e.g. "Premier League — Matchday 12"),
+  /// purely a display concern; the chain only knows fixture ids.
+  gameweekLabel     String
+  minStake          BigInt
+  rakeBps           Int
+  minParticipants   Int
+  curveKX100        Int
+  paidPercentBps    Int
+  weekStart         DateTime
+  weekEnd           DateTime
+  fixtureIds        String[]
+  status            PoolStatus @default(open)
+  participantCount  Int        @default(0)
+  totalStaked       BigInt     @default(0)
+  createdAt         DateTime   @default(now())
+
+  entries StakeEntry[]
+
+  @@index([status])
+}
+
+/// Off-chain mirror of a `StakeAccount` PDA.
+model StakeEntry {
+  id                  String    @id @default(cuid())
+  poolId              String
+  pool                Pool      @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stakeAccountAddress String    @unique
+  amountStaked        BigInt
+  joinedAt            DateTime  @default(now())
+  poolPoints          BigInt    @default(0)
+  scored              Boolean   @default(false)
+  /// 1-indexed; null until settle_pool has run.
+  rank                Int?
+  payoutAmount        BigInt?
+  claimed             Boolean   @default(false)
+
+  @@unique([poolId, userId])
+  @@index([poolId])
+  @@index([userId])
+}
+
+enum TeamAssetType {
+  club
+  country
+}
+
+/// EXPANSION.md Section 1.4: "every screen renders from TeamAssetMap,
+/// never from a raw provider field directly, so a broken or missing
+/// image never silently shows nothing, and swapping providers later only
+/// means repopulating one table." Flags only for now (see
+/// packages/shared/src/flags.ts) — club crests deferred, ambiguous
+/// commercial licensing on the free tiers of the providers EXPANSION
+/// suggests, and no real club fixture has ever run through this app to
+/// test against (every real fixture so far is international).
+model TeamAssetMap {
+  id                 String        @id @default(cuid())
+  txlineTeamId       String        @unique
+  teamName           String
+  assetType          TeamAssetType
+  internalKitId      String?
+  logoProviderTeamId String?
+  realLogoUrl        String?
+  isoCountryCode     String?
+  realFlagUrl        String?
+  resolvedAt         DateTime      @default(now())
+}

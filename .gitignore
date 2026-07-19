@@ -1,0 +1,24 @@
+node_modules
+.env
+.env.local
+.next
+dist
+# target/ is Anchor/Cargo build output — mostly huge, disposable Rust build
+# artifacts, EXCEPT target/idl/sixth_sense.json, which several files
+# (packages/txline/src/pool-chain.ts, pool-instructions.ts,
+# settlement-worker.ts) statically import at build time. Vercel builds
+# apps/web from a fresh checkout with no local `anchor build` step, so
+# that one file must be committed or the production build breaks.
+target/*
+!target/idl
+!target/idl/**
+.turbo
+*.log
+*.tsbuildinfo
+.DS_Store
+.anchor
+test-ledger
+.surfpool
+**/*.rs.bk
+CLAUDE.md
+EXPANSION.md

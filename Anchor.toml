@@ -1,0 +1,25 @@
+skip_local_validator = true
+
+[toolchain]
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+sixth_sense = "5eLFecutwEdSSF5v3FpKbnUpNL4YVD1mmBuZnFMRbUt9"
+
+[programs.devnet]
+sixth_sense = "5eLFecutwEdSSF5v3FpKbnUpNL4YVD1mmBuZnFMRbUt9"
+
+# devnet is the default cluster per CLAUDE.md's safety toggle — never
+# hardcode this to mainnet. `wallet` is the funded TxLINE service wallet
+# (also the deployer/authority for this program).
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test-sbf"
+
+[hooks]
