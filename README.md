@@ -20,8 +20,6 @@ This is a real, working product, not a demo shell. Every integration in this rep
 - [Admin and maintenance scripts](#admin-and-maintenance-scripts)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- [Design system](#design-system)
-- [Known gaps and honest limitations](#known-gaps-and-honest-limitations)
 - [Credits](#credits)
 
 ## What is actually built
