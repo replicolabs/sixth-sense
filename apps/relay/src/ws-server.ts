@@ -13,16 +13,29 @@ import {
 } from "@sixth-sense/shared";
 import type { Keypair } from "@solana/web3.js";
 import { WebSocketServer, type WebSocket } from "ws";
-import { liveFixtureEvents } from "./live-engine";
+import { checkLiveFixture, liveFixtureEvents } from "./live-engine";
 import { replayFixture, type ReplayOptions } from "./replay-engine";
 
 function send(socket: WebSocket, message: RelayMessage) {
   if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(message));
 }
 
-function broadcast(wss: WebSocketServer, message: RelayMessage) {
+/**
+ * Sockets on the shared default broadcast (no `?fixtureId=` / `?live=`
+ * param) — NOT `wss.clients`, which is every socket connected to this
+ * process regardless of which path routed them. Found by actually
+ * testing two live channels at once: both were also receiving the
+ * shared replay broadcast's messages, because `wss.clients` doesn't
+ * distinguish Classics/live sockets from default ones — a real,
+ * pre-existing bug (every Classics session has been leaking the shared
+ * broadcast's messages into itself this whole time), just never caught
+ * until on-demand live channels made it obvious.
+ */
+const defaultBroadcastSockets = new Set<WebSocket>();
+
+function broadcast(message: RelayMessage) {
   const text = JSON.stringify(message);
-  for (const client of wss.clients as Set<WebSocket>) {
+  for (const client of defaultBroadcastSockets) {
     if (client.readyState === client.OPEN) client.send(text);
   }
 }
@@ -114,17 +127,13 @@ async function runReplayOnce(
  * all since the loop had already finished. CLAUDE.md Section 12 also wants
  * Replay Mode "bulletproof," which a dead-ending demo isn't.
  */
-export function startReplayBroadcast(
-  wss: WebSocketServer,
-  fixtureId: string,
-  options: ReplayOptions,
-): void {
+export function startReplayBroadcast(fixtureId: string, options: ReplayOptions): void {
   (async () => {
     for (;;) {
       console.log(
         `Replay broadcast starting: fixture=${fixtureId} acceleration=${options.accelerationFactor ?? 40}x`,
       );
-      await runReplayOnce(fixtureId, options, (message) => broadcast(wss, message));
+      await runReplayOnce(fixtureId, options, (message) => broadcast(message));
       console.log("Replay broadcast complete — restarting shortly");
       await sleep(10_000);
     }
@@ -133,34 +142,77 @@ export function startReplayBroadcast(
   });
 }
 
+export interface LiveDeps {
+  serviceWallet: Keypair;
+  subscribeTxSig: string;
+}
+
+interface LiveChannel {
+  sockets: Set<WebSocket>;
+}
+
 /**
- * CLAUDE.md Phase 7: the real live path, broadcast to every connected
- * client exactly like the replay broadcast (same shared-fanout rule).
- * Runs once through the featured fixture's real match — once it ends
- * (game_finalised), the relay goes idle for this broadcast rather than
- * looping (unlike replay, there's no cached data to loop back over; a
- * new live fixture needs a fresh restart with a new LIVE_FIXTURE_ID,
- * since auto-discovering "whatever's live now" is a match-list feature
- * that doesn't exist yet — CLAUDE.md Section 11.2).
+ * On-demand live channels, keyed by fixtureId — replaces the old
+ * boot-time LIVE_FIXTURE_ID model (one hardcoded fixture, needed a
+ * process restart to change). A user picks any real, currently-listed
+ * fixture from the home screen (GET /api/fixtures/live in apps/web) and
+ * connects with `?live=<fixtureId>`; the first request for a given
+ * fixture starts its demux off the shared global TxLINE live stream
+ * (still only one long-lived TxLINE session per fixture actually being
+ * watched, not per user — CLAUDE.md Section 5), and every later request
+ * for the SAME fixture just joins the existing channel's broadcast set.
+ * The channel tears itself down when the match ends or the stream
+ * errors out, so a later request for the same (or a re-started) fixture
+ * starts clean.
  */
-export function startLiveBroadcast(
-  wss: WebSocketServer,
-  fixtureId: string,
-  serviceWallet: Keypair,
-  subscribeTxSig: string,
-): void {
+const liveChannels = new Map<string, LiveChannel>();
+
+function broadcastToChannel(channel: LiveChannel, message: RelayMessage) {
+  const text = JSON.stringify(message);
+  for (const socket of channel.sockets) {
+    if (socket.readyState === socket.OPEN) socket.send(text);
+  }
+}
+
+function joinLiveChannel(fixtureId: string, deps: LiveDeps, socket: WebSocket): void {
+  let channel = liveChannels.get(fixtureId);
+  if (channel) {
+    channel.sockets.add(socket);
+    socket.on("close", () => channel!.sockets.delete(socket));
+    return;
+  }
+
+  channel = { sockets: new Set([socket]) };
+  liveChannels.set(fixtureId, channel);
+  socket.on("close", () => channel!.sockets.delete(socket));
+
   (async () => {
-    console.log(`Live broadcast starting: fixture=${fixtureId}`);
+    console.log(`Live channel starting: fixture=${fixtureId}`);
+    const fixtureInfo = await checkLiveFixture(fixtureId, deps.serviceWallet, deps.subscribeTxSig);
+
+    if (new Date(fixtureInfo.startTime).getTime() > Date.now()) {
+      broadcastToChannel(channel!, { type: "live_pending", fixtureId, startTime: fixtureInfo.startTime });
+    }
+
     await runEventStream(
       fixtureId,
       "live",
-      liveFixtureEvents(fixtureId, serviceWallet, subscribeTxSig),
-      (message) => broadcast(wss, message),
+      liveFixtureEvents(fixtureId, deps.serviceWallet, deps.subscribeTxSig),
+      (message) => broadcastToChannel(channel!, message),
     );
-    console.log(`Live broadcast for fixture ${fixtureId} ended (match finalised).`);
-  })().catch((err) => {
-    console.error("Live broadcast failed:", err);
-  });
+    console.log(`Live channel for fixture ${fixtureId} ended (match finalised).`);
+  })()
+    .catch((err) => {
+      console.error(`Live channel for fixture ${fixtureId} failed:`, err);
+      broadcastToChannel(channel!, {
+        type: "live_error",
+        fixtureId,
+        message: err instanceof Error ? err.message : "live stream failed",
+      });
+    })
+    .finally(() => {
+      liveChannels.delete(fixtureId);
+    });
 }
 
 /**
@@ -189,14 +241,35 @@ async function runClassicsSession(
   }
 }
 
-export function createWsServer(port: number, defaultOptions: ReplayOptions): WebSocketServer {
+export function createWsServer(
+  port: number,
+  defaultOptions: ReplayOptions,
+  liveDeps?: LiveDeps,
+): WebSocketServer {
   const wss = new WebSocketServer({ port });
   wss.on("connection", (socket, req) => {
-    const fixtureId = new URL(req.url ?? "/", "http://relay").searchParams.get("fixtureId");
+    const params = new URL(req.url ?? "/", "http://relay").searchParams;
+    const liveFixtureId = params.get("live");
+    const fixtureId = params.get("fixtureId");
+
+    if (liveFixtureId) {
+      if (!liveDeps) {
+        console.log(`Live request for fixture ${liveFixtureId} — relay has no TxLINE credentials configured, closing`);
+        socket.close(4005, "live mode not configured");
+        return;
+      }
+      console.log(`Client connected (live: ${liveFixtureId})`);
+      joinLiveChannel(liveFixtureId, liveDeps, socket);
+      return;
+    }
 
     if (!fixtureId) {
       console.log("Client connected (shared live/demo broadcast)");
-      socket.on("close", () => console.log("Client disconnected"));
+      defaultBroadcastSockets.add(socket);
+      socket.on("close", () => {
+        defaultBroadcastSockets.delete(socket);
+        console.log("Client disconnected");
+      });
       return;
     }
 

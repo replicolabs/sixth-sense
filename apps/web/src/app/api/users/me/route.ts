@@ -27,5 +27,6 @@ export async function GET(request: Request) {
     bestStreak: user.bestStreak,
     lifetimeWins: user.lifetimeWins,
     lifetimeMatchesPlayed: user.lifetimeMatchesPlayed,
+    hasOnboarded: user.hasOnboarded,
   });
 }

@@ -1,10 +1,10 @@
 /**
  * CLAUDE.md Phase 7 / Section 6.5: the real live path. `/api/scores/stream`
  * is one global firehose covering whatever's live — this filters it down
- * to one featured fixture (matching the existing single-broadcast
- * architecture; picking from multiple simultaneous live fixtures would
- * need a match-list screen that doesn't exist yet, CLAUDE.md Section
- * 11.2, so that's a real, separate, un-built feature, not faked here).
+ * to one specific fixture per call. ws-server.ts's on-demand live channels
+ * call this once per distinct fixture actually being watched (not once
+ * per user), so multiple simultaneous live matches are supported without
+ * multiplying TxLINE stream connections per viewer.
  *
  * Ordering, dedupe, and recovery per Section 6.5: track seq, drop
  * anything not strictly greater, and on a detected gap re-hydrate from
@@ -35,6 +35,22 @@ async function resolveFixtureInfo(
   const found = snapshot.find((f) => String(f.FixtureId) === fixtureId);
   if (!found) throw new Error(`Live fixture ${fixtureId} not found in fixtures/snapshot`);
   return normalizeFixtureSnapshot(found);
+}
+
+/**
+ * Looks up a fixture without opening the live stream — used to tell an
+ * on-demand live channel (ws-server.ts) whether the fixture the user
+ * picked exists and has actually kicked off yet, before committing to a
+ * long-lived stream connection for it.
+ */
+export async function checkLiveFixture(
+  fixtureId: string,
+  serviceWallet: Keypair,
+  subscribeTxSig: string,
+): Promise<FixtureInfo> {
+  const config = loadTxLineConfig();
+  const session = await getOrActivateSession(config, subscribeTxSig, serviceWallet);
+  return resolveFixtureInfo(config, session, fixtureId);
 }
 
 /**

@@ -58,6 +58,13 @@ model User {
   /// Hidden plumbing, never shown in the default UI (CLAUDE.md Section 8).
   walletAddress String   @unique
   nickname      String
+  /// CLAUDE.md Section 11.1: false right after the first-login upsert
+  /// (nickname is still the `Player-xxxxxx` placeholder). Set true once
+  /// the user actually finishes the real nickname + avatar onboarding
+  /// flow — distinct from just checking the nickname's shape, which would
+  /// misfire if someone genuinely picked a name that happened to match
+  /// the placeholder pattern.
+  hasOnboarded  Boolean  @default(false)
   xp            Int      @default(0)
   level         Int      @default(1)
   /// Folded onto User per CLAUDE.md Section 7's own note ("can live on User").

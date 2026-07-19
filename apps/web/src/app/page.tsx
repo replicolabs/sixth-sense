@@ -4,14 +4,22 @@ import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import type { FixtureInfo } from "@sixth-sense/shared";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { StreakFlame } from "@/components/ui/StreakFlame";
+import { LiveTag } from "@/components/ui/LiveTag";
 
 interface ProfileSummary {
   nickname: string;
   bestStreak: number;
   lifetimeWins: number;
+}
+
+interface LiveFixturesResponse {
+  configured: boolean;
+  live: FixtureInfo[];
+  upcoming: FixtureInfo[];
 }
 
 const WHY_POINTS = [
@@ -41,6 +49,7 @@ const WHY_POINTS = [
 export default function HomePage() {
   const { authenticated, login, user } = usePrivy();
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
+  const [fixtures, setFixtures] = useState<LiveFixturesResponse | null>(null);
 
   useEffect(() => {
     if (!authenticated || !user) {
@@ -61,6 +70,26 @@ export default function HomePage() {
     };
   }, [authenticated, user]);
 
+  // CLAUDE.md Section 11.2: real live matches first, pulled from
+  // /api/fixtures/live (a server-side proxy over TxLINE's fixtures
+  // snapshot — the browser never talks to TxLINE directly, Section 5).
+  // No manual fixture switching, no relay restart — whatever TxLINE says
+  // is live or starting soon just shows up here.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/fixtures/live")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (!cancelled) setFixtures(body);
+      })
+      .catch(() => {
+        if (!cancelled) setFixtures(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-8 px-4 pb-12 pt-8">
       <header className="flex items-center justify-between">
@@ -68,7 +97,6 @@ export default function HomePage() {
           <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
             Sixth Sense
           </span>
-          <span className="breathing h-1.5 w-1.5 rounded-full bg-[var(--volt-500)]" />
         </div>
         <div className="flex items-center gap-3">
           <Link href="/leaderboard" className="text-sm font-medium text-[var(--pine-700)]">
@@ -133,6 +161,50 @@ export default function HomePage() {
           </Link>
         </div>
       </motion.section>
+
+      {fixtures && (fixtures.live.length > 0 || fixtures.upcoming.length > 0) && (
+        <section className="flex flex-col gap-3">
+          {fixtures.live.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-500)]">Live now</p>
+              {fixtures.live.map((f) => (
+                <Link key={f.fixtureId} href={`/play?live=${f.fixtureId}`}>
+                  <GlassPanel radius="lg" className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--ink-900)]">
+                        {f.participant1} vs {f.participant2}
+                      </p>
+                      <p className="text-xs text-[var(--ink-500)]">{f.competition}</p>
+                    </div>
+                    <LiveTag />
+                  </GlassPanel>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {fixtures.upcoming.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-500)]">Starting soon</p>
+              {fixtures.upcoming.map((f) => (
+                <Link key={f.fixtureId} href={`/play?live=${f.fixtureId}`}>
+                  <GlassPanel radius="lg" className="flex items-center justify-between px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--ink-900)]">
+                        {f.participant1} vs {f.participant2}
+                      </p>
+                      <p className="text-xs text-[var(--ink-500)]">{f.competition}</p>
+                    </div>
+                    <p className="text-xs font-medium text-[var(--ink-500)]">
+                      {new Date(f.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </GlassPanel>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         {WHY_POINTS.map((point) => (

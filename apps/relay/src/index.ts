@@ -2,16 +2,19 @@
  * Sixth Sense relay service.
  *
  * Phase 2 scope (CLAUDE.md Section 16): serve a cached real match over
- * WebSocket on an accelerated clock. Phase 7: LIVE_FIXTURE_ID switches the
- * shared broadcast to the real live TxLINE stream instead — mutually
- * exclusive with REPLAY_FIXTURE_ID (only one shared broadcast runs at a
- * time; Classics sessions work off cached fixtures regardless of which
- * mode the shared broadcast is in).
+ * WebSocket on an accelerated clock — the always-on shared broadcast,
+ * driven by REPLAY_FIXTURE_ID. Phase 7 (live mode) is no longer a
+ * boot-time, single-fixture, restart-to-change toggle: any client can
+ * request a real live match on demand via `?live=<fixtureId>` (see
+ * ws-server.ts's on-demand live channels), as long as
+ * TXLINE_SERVICE_WALLET_SECRET and TXLINE_SUBSCRIBE_TX_SIG are set. Both
+ * the replay shared broadcast and on-demand live channels can run at the
+ * same time — they no longer compete for one "mode".
  */
 import { loadRootEnv } from "@sixth-sense/txline";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
-import { createWsServer, startLiveBroadcast, startReplayBroadcast } from "./ws-server";
+import { createWsServer, startReplayBroadcast, type LiveDeps } from "./ws-server";
 
 loadRootEnv();
 
@@ -25,6 +28,19 @@ function loadServiceWallet(): Keypair {
   return Keypair.fromSecretKey(bs58.decode(raw.trim()));
 }
 
+function loadLiveDeps(): LiveDeps | undefined {
+  const walletSecret = process.env.TXLINE_SERVICE_WALLET_SECRET;
+  const subscribeTxSig = process.env.TXLINE_SUBSCRIBE_TX_SIG;
+  if (!walletSecret || !subscribeTxSig) {
+    console.log(
+      "TXLINE_SERVICE_WALLET_SECRET / TXLINE_SUBSCRIBE_TX_SIG not set — on-demand live matches " +
+        "(?live=<fixtureId>) are disabled, but the replay shared broadcast and Classics still work.",
+    );
+    return undefined;
+  }
+  return { serviceWallet: loadServiceWallet(), subscribeTxSig };
+}
+
 function main() {
   // Railway (and most PaaS hosts) assign a port dynamically via `PORT` and
   // expect the app to bind to exactly that — it doesn't match whatever
@@ -35,26 +51,18 @@ function main() {
   const accelerationFactor = Number(process.env.REPLAY_ACCELERATION ?? 40);
   // Same acceleration factor drives both the shared broadcast and any
   // per-connection Classics session (?fixtureId=<id>) — see ws-server.ts.
-  const wss = createWsServer(port, { accelerationFactor });
-
-  const liveFixtureId = process.env.LIVE_FIXTURE_ID;
-  if (liveFixtureId) {
-    const subscribeTxSig = process.env.TXLINE_SUBSCRIBE_TX_SIG;
-    if (!subscribeTxSig) throw new Error("TXLINE_SUBSCRIBE_TX_SIG is not set");
-    startLiveBroadcast(wss, liveFixtureId, loadServiceWallet(), subscribeTxSig);
-    return;
-  }
+  createWsServer(port, { accelerationFactor }, loadLiveDeps());
 
   const fixtureId = process.env.REPLAY_FIXTURE_ID;
   if (!fixtureId) {
     console.log(
-      "Neither LIVE_FIXTURE_ID nor REPLAY_FIXTURE_ID is set — shared broadcast idle, but Classics " +
-        "sessions (ws://.../?fixtureId=<id>) still work off cached fixtures.",
+      "REPLAY_FIXTURE_ID is not set — shared broadcast idle, but Classics sessions " +
+        "(ws://.../?fixtureId=<id>) and live matches (ws://.../?live=<fixtureId>) still work.",
     );
     return;
   }
 
-  startReplayBroadcast(wss, fixtureId, { accelerationFactor });
+  startReplayBroadcast(fixtureId, { accelerationFactor });
 }
 
 main();

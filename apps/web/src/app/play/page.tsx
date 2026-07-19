@@ -11,6 +11,7 @@ import { MatchHero } from "@/components/MatchHero";
 import { MilestoneBanner } from "@/components/MilestoneBanner";
 import { PredictionCardPanel } from "@/components/PredictionCardPanel";
 import { PrimaryButton } from "@/components/ui/Buttons";
+import { LiveTag } from "@/components/ui/LiveTag";
 import { ResultBanner } from "@/components/ResultBanner";
 import { SessionSummaryPanel, type SessionSummary } from "@/components/SessionSummaryPanel";
 import { useGameStore } from "@/store/gameStore";
@@ -34,28 +35,40 @@ function PlayPageInner() {
   const points = useGameStore((s) => s.points);
   const sessionPredictions = useGameStore((s) => s.sessionPredictions);
   const reconnectAttempts = useGameStore((s) => s.reconnectAttempts);
+  const livePending = useGameStore((s) => s.livePending);
+  const liveError = useGameStore((s) => s.liveError);
   const completedSessionRef = useRef(false);
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
 
   // EXPANSION.md Section 2 (Classics shelf): ?fixtureId=<id> requests a
   // private, single-match replay session instead of the shared live/demo
   // broadcast — see apps/relay/src/ws-server.ts's per-connection handling.
-  // Uses useSearchParams (not a mount-once read of window.location) because
-  // the App Router can reuse this same route's component instance across a
-  // Link-driven navigation that only changes the query string — a
-  // mount-once value would keep pointing at whichever classic was current
-  // when the component first mounted (a real bug caught by testing the
-  // shelf -> play flow end to end: clicking a second classic kept playing
-  // the first one).
-  const classicsFixtureId = useSearchParams().get("fixtureId");
+  // ?live=<fixtureId> requests a real, on-demand live match instead (a
+  // user's pick from /api/fixtures/live on the home screen) — see
+  // ws-server.ts's on-demand live channels. Uses useSearchParams (not a
+  // mount-once read of window.location) because the App Router can reuse
+  // this same route's component instance across a Link-driven navigation
+  // that only changes the query string — a mount-once value would keep
+  // pointing at whichever match was current when the component first
+  // mounted (a real bug caught by testing the shelf -> play flow end to
+  // end: clicking a second classic kept playing the first one).
+  const searchParams = useSearchParams();
+  const classicsFixtureId = searchParams.get("fixtureId");
+  const liveFixtureId = searchParams.get("live");
 
   useEffect(() => {
     const baseWsUrl = process.env.NEXT_PUBLIC_RELAY_WS_URL ?? "ws://localhost:8080";
-    const wsUrl = classicsFixtureId ? `${baseWsUrl}?fixtureId=${classicsFixtureId}` : baseWsUrl;
-    const accelerationFactor = Number(process.env.NEXT_PUBLIC_REPLAY_ACCELERATION ?? 1);
+    const wsUrl = liveFixtureId
+      ? `${baseWsUrl}?live=${liveFixtureId}`
+      : classicsFixtureId
+        ? `${baseWsUrl}?fixtureId=${classicsFixtureId}`
+        : baseWsUrl;
+    // Live matches run at real match speed (acceleration 1), regardless
+    // of the replay acceleration configured for the demo/Classics paths.
+    const accelerationFactor = liveFixtureId ? 1 : Number(process.env.NEXT_PUBLIC_REPLAY_ACCELERATION ?? 1);
     connect(wsUrl, accelerationFactor);
     return () => disconnect();
-  }, [connect, disconnect, classicsFixtureId]);
+  }, [connect, disconnect, classicsFixtureId, liveFixtureId]);
 
   // Phase 6: fold this session's real prediction history into Postgres,
   // trigger the on-chain settlement floor, and check for kit unlocks —
@@ -73,7 +86,7 @@ function PlayPageInner() {
       body: JSON.stringify({
         privyId: user.id,
         fixtureId,
-        mode: classicsFixtureId ? "replay" : "replay",
+        mode: liveFixtureId ? "live" : "replay",
         predictions: sessionPredictions.map((p) => ({
           cardType: p.card.cardType,
           question: p.card.question,
@@ -120,7 +133,7 @@ function PlayPageInner() {
           <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
             Sixth Sense
           </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--volt-500)]" />
+          {liveFixtureId && <LiveTag />}
           {classicsFixtureId && (
             <span className="ml-1 rounded-[var(--r-pill)] bg-[var(--cream-sunken)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-500)]">
               Classic
@@ -149,7 +162,21 @@ function PlayPageInner() {
         </div>
       )}
 
-      {!matchState && (
+      {liveError && (
+        <p className="text-center text-sm font-medium text-[var(--loss)]">
+          This match isn&apos;t available right now. Try another one from the home screen.
+        </p>
+      )}
+
+      {!liveError && livePending && !matchState && (
+        <p className="text-center text-sm text-[var(--ink-500)]">
+          Kicks off at{" "}
+          {new Date(livePending.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.
+          Hang tight, the game starts the moment it does.
+        </p>
+      )}
+
+      {!liveError && !livePending && !matchState && (
         <p className="text-center text-sm text-[var(--ink-500)]">
           {connected
             ? "Waiting for match data…"

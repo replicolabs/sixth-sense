@@ -46,6 +46,10 @@ interface GameState {
   sessionPredictions: ResolvedCardResult[];
   /** Section 11.4: a milestone streak (5, 10, ...) worth a bigger celebration than the normal win pop. */
   milestoneStreak: number | null;
+  /** A picked live match hasn't kicked off yet — set from "live_pending", cleared by the first real "match_event". */
+  livePending: { fixtureId: string; startTime: string } | null;
+  /** The live channel the user picked failed to start (bad fixtureId, TxLINE error) — set from "live_error". */
+  liveError: string | null;
   socket: WebSocket | null;
   /**
    * Anchors for estimating "current match time" between discrete event
@@ -109,6 +113,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   sessionWins: 0,
   sessionPredictions: [],
   milestoneStreak: null,
+  livePending: null,
+  liveError: null,
   socket: null,
   lastEventMatchTs: 0,
   lastEventWallClockMs: 0,
@@ -170,12 +176,24 @@ export const useGameStore = create<GameState>((set, get) => ({
             sessionWins: 0,
             sessionPredictions: [],
             milestoneStreak: null,
+            livePending: null,
+            liveError: null,
           });
           return;
         }
 
         if (message.type === "replay_complete") {
           set({ matchComplete: true });
+          return;
+        }
+
+        if (message.type === "live_pending") {
+          set({ livePending: { fixtureId: message.fixtureId, startTime: message.startTime } });
+          return;
+        }
+
+        if (message.type === "live_error") {
+          set({ liveError: message.message });
           return;
         }
 
@@ -197,6 +215,7 @@ export const useGameStore = create<GameState>((set, get) => ({
               matchState: reduceMatchState(baseState, message.payload),
               lastEventMatchTs: message.payload.update.ts,
               lastEventWallClockMs: Date.now(),
+              livePending: null,
               ...(isNewFixture
                 ? {
                     matchComplete: false,

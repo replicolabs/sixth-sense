@@ -1,0 +1,62 @@
+import { getFixturesSnapshot, getOrActivateSession, loadTxLineConfig, normalizeFixtureSnapshot } from "@sixth-sense/txline";
+import type { FixtureInfo } from "@sixth-sense/shared";
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
+import { NextResponse } from "next/server";
+
+// Generous enough to cover 90 minutes + stoppage + extra time + penalties
+// for a knockout match, without needing to know the real match status
+// (fixtures/snapshot carries no status/live flag at all — confirmed
+// against the real endpoint, see packages/txline/src/raw.ts's
+// RawFixtureSnapshotItem). A match is "live" here if it kicked off in the
+// past but not more than this long ago.
+const LIVE_WINDOW_MS = 150 * 60 * 1000;
+// How far ahead to surface a match as "starting soon" on the home screen.
+const UPCOMING_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+function loadServiceWallet(): Keypair | null {
+  const raw = process.env.TXLINE_SERVICE_WALLET_SECRET;
+  if (!raw) return null;
+  return Keypair.fromSecretKey(bs58.decode(raw.trim()));
+}
+
+/**
+ * Real fixture discovery for the home screen (CLAUDE.md Section 11.2's
+ * original spec — "A list of matches: live matches first... Pulled from
+ * `/api/fixtures/snapshot`" — which the build had shortcut around with a
+ * single hardcoded LIVE_FIXTURE_ID env var). The browser never talks to
+ * TxLINE directly (Section 5); this route does it server-side, same
+ * pattern as settlement-worker.ts's callers.
+ */
+export async function GET() {
+  const serviceWallet = loadServiceWallet();
+  const subscribeTxSig = process.env.TXLINE_SUBSCRIBE_TX_SIG;
+
+  if (!serviceWallet || !subscribeTxSig) {
+    return NextResponse.json({ configured: false, live: [], upcoming: [] });
+  }
+
+  const config = loadTxLineConfig();
+  const session = await getOrActivateSession(config, subscribeTxSig, serviceWallet);
+  const snapshot = await getFixturesSnapshot(config, session, {});
+  const fixtures = snapshot.map(normalizeFixtureSnapshot);
+
+  const now = Date.now();
+  const live: FixtureInfo[] = [];
+  const upcoming: FixtureInfo[] = [];
+
+  for (const fixture of fixtures) {
+    const startMs = new Date(fixture.startTime).getTime();
+    const sinceStart = now - startMs;
+    if (sinceStart >= 0 && sinceStart <= LIVE_WINDOW_MS) {
+      live.push(fixture);
+    } else if (sinceStart < 0 && -sinceStart <= UPCOMING_WINDOW_MS) {
+      upcoming.push(fixture);
+    }
+  }
+
+  live.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  upcoming.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  return NextResponse.json({ configured: true, live, upcoming });
+}
