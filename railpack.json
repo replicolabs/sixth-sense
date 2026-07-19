@@ -1,4 +1,11 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "node"
+  "provider": "node",
+  "steps": {
+    "build": {
+      "commands": [
+        { "cmd": "echo 'relay: no build step, runs from source via tsx'" }
+      ]
+    }
+  }
 }
