@@ -1,8 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "RAILPACK",
-    "buildCommand": "pnpm install --frozen-lockfile"
+    "builder": "RAILPACK"
   },
   "deploy": {
     "startCommand": "pnpm --filter @sixth-sense/relay start",
