@@ -12,13 +12,14 @@ import { MilestoneBanner } from "@/components/MilestoneBanner";
 import { PredictionCardPanel } from "@/components/PredictionCardPanel";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { LiveTag } from "@/components/ui/LiveTag";
+import { Logo } from "@/components/ui/Logo";
 import { ResultBanner } from "@/components/ResultBanner";
 import { SessionSummaryPanel, type SessionSummary } from "@/components/SessionSummaryPanel";
 import { useGameStore } from "@/store/gameStore";
 
 /**
  * Phase 3 ship criterion (CLAUDE.md Section 16): "the game is fun to play
- * against replayed data." Phase 4: full Section 10 design system applied —
+ * against replayed data." Phase 4: full Section 10 design system applied,
  * liquid glass, Bricolage/Geist type scale, spring motion throughout.
  */
 function PlayPageInner() {
@@ -42,15 +43,15 @@ function PlayPageInner() {
 
   // EXPANSION.md Section 2 (Classics shelf): ?fixtureId=<id> requests a
   // private, single-match replay session instead of the shared live/demo
-  // broadcast — see apps/relay/src/ws-server.ts's per-connection handling.
+  // broadcast, see apps/relay/src/ws-server.ts's per-connection handling.
   // ?live=<fixtureId> requests a real, on-demand live match instead (a
-  // user's pick from /api/fixtures/live on the home screen) — see
+  // user's pick from /api/fixtures/live on the home screen), see
   // ws-server.ts's on-demand live channels. Uses useSearchParams (not a
   // mount-once read of window.location) because the App Router can reuse
   // this same route's component instance across a Link-driven navigation
-  // that only changes the query string — a mount-once value would keep
+  // that only changes the query string, a mount-once value would keep
   // pointing at whichever match was current when the component first
-  // mounted (a real bug caught by testing the shelf -> play flow end to
+  // mounted (a real bug caught by testing the shelf to play flow end to
   // end: clicking a second classic kept playing the first one).
   const searchParams = useSearchParams();
   const classicsFixtureId = searchParams.get("fixtureId");
@@ -71,7 +72,7 @@ function PlayPageInner() {
   }, [connect, disconnect, classicsFixtureId, liveFixtureId]);
 
   // Phase 6: fold this session's real prediction history into Postgres,
-  // trigger the on-chain settlement floor, and check for kit unlocks —
+  // trigger the on-chain settlement floor, and check for kit unlocks,
   // all in one call, once, when the match wraps up.
   useEffect(() => {
     if (!matchComplete || !user || completedSessionRef.current) return;
@@ -126,13 +127,11 @@ function PlayPageInner() {
         : "idle";
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-4 px-4 pb-10 pt-6 sm:px-6">
       <MilestoneBanner />
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
-            Sixth Sense
-          </span>
+        <div className="flex items-center gap-2">
+          <Logo iconSize={22} />
           {liveFixtureId && <LiveTag />}
           {classicsFixtureId && (
             <span className="ml-1 rounded-[var(--r-pill)] bg-[var(--cream-sunken)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-500)]">
@@ -188,7 +187,7 @@ function PlayPageInner() {
 
       {matchState && !connected && (
         <p className="text-center text-xs font-medium text-[var(--loss)]">
-          Connection dropped — reconnecting…
+          Connection dropped, reconnecting…
         </p>
       )}
 

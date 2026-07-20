@@ -9,7 +9,7 @@ import { PrimaryButton } from "@/components/ui/Buttons";
 import { useClaimPayout } from "@/hooks/useClaimPayout";
 import { useJoinPool } from "@/hooks/useJoinPool";
 
-const TOKEN_DECIMALS = 6; // see pools/page.tsx's note — USDC/USDT-shaped mints only.
+const TOKEN_DECIMALS = 6; // see pools/page.tsx's note, USDC/USDT-shaped mints only.
 
 interface PoolDetail {
   poolIdOnChain: string;
@@ -115,14 +115,14 @@ export default function PoolDetailPage() {
 
   if (!pool) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
+      <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 pb-10 pt-6 sm:px-6">
         <p className="text-center text-sm text-[var(--ink-500)]">Loading pool…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 pb-10 pt-6 sm:px-6">
       <header className="flex items-center justify-between">
         <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
           Pools
@@ -191,7 +191,7 @@ export default function PoolDetailPage() {
           <p className="text-sm font-semibold text-[var(--win)]">
             You&apos;re in for ${dollars(myEntry.amountStaked)}.
           </p>
-          <p className="mt-1 text-xs text-[var(--ink-500)]">Play the free game as usual — this pool scores it.</p>
+          <p className="mt-1 text-xs text-[var(--ink-500)]">Play the free game as usual, this pool scores it.</p>
         </GlassPanel>
       )}
 
@@ -205,7 +205,7 @@ export default function PoolDetailPage() {
         <GlassPanel radius="lg" className="p-4">
           {pool.status === "cancelled" ? (
             <p className="text-sm font-semibold text-[var(--ink-900)]">
-              This pool didn&apos;t reach the minimum {pool.minParticipants} stakers — everyone gets a full refund.
+              This pool didn&apos;t reach the minimum {pool.minParticipants} stakers, everyone gets a full refund.
             </p>
           ) : (
             <p className="text-sm font-semibold text-[var(--ink-900)]">

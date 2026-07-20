@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { History } from "lucide-react";
+import { AppNav } from "@/components/AppNav";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { TeamFlag } from "@/components/TeamFlag";
@@ -31,7 +33,7 @@ function useDebounced<T>(value: T, delayMs: number): T {
 /**
  * EXPANSION.md Section 2: the Classics shelf. A searchable library of real,
  * TxLINE-verified matches we captured ourselves before their historical
- * window closed (see packages/txline/src/archive-fixture.ts) — every one
+ * window closed (see packages/txline/src/archive-fixture.ts), every one
  * keeps its full Provably Fair capability, same as a live match. Picking a
  * card starts a private replay session on /play (?fixtureId=...), isolated
  * from the shared live/demo broadcast (apps/relay/src/ws-server.ts).
@@ -71,19 +73,22 @@ export default function ClassicsPage() {
   }, [matches]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
-      <header className="flex items-center justify-between">
-        <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
-          Classics
-        </span>
-        <Link href="/play" className="text-sm font-medium text-[var(--pine-700)]">
-          Back to live
-        </Link>
-      </header>
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      <AppNav />
 
-      <p className="text-sm text-[var(--ink-500)]">
-        Real matches, ready any time. Every one settles the same way a live call does.
-      </p>
+      <div className="flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-lg)] bg-[var(--pine-800)]">
+          <History className="h-7 w-7 text-[var(--volt-500)]" strokeWidth={1.75} />
+        </div>
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold text-[var(--ink-900)]">
+            Classics
+          </h1>
+          <p className="text-sm text-[var(--ink-500)]">
+            Real matches, ready any time. Every one settles the same way a live call does.
+          </p>
+        </div>
+      </div>
 
       <input
         type="text"
@@ -91,7 +96,7 @@ export default function ClassicsPage() {
         placeholder="Search a team, competition, or moment"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="rounded-[var(--r-md)] border border-[var(--hairline)] bg-[var(--cream-elevated)] px-4 py-3 text-[var(--ink-900)] placeholder:text-[var(--ink-400)] focus:outline-none focus:ring-2 focus:ring-[var(--volt-500)]"
+        className="w-full max-w-xl rounded-[var(--r-md)] border border-[var(--hairline)] bg-[var(--cream-elevated)] px-4 py-3 text-[var(--ink-900)] placeholder:text-[var(--ink-400)] focus:outline-none focus:ring-2 focus:ring-[var(--volt-500)]"
       />
 
       {availableTags.length > 0 && (
@@ -125,7 +130,7 @@ export default function ClassicsPage() {
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {matches?.map((match) => (
           <GlassPanel key={match.id} radius="lg" className="p-4">
             <div className="flex items-center justify-between">

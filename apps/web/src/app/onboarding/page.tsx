@@ -42,7 +42,7 @@ const STEP_ORDER: Step[] = ["name", "look", "explainer"];
  * your name' and 'Pick your look'... A 3-card explainer of the loop...
  * Skippable... End on a big volt CTA: 'Start playing.'" Reached via
  * useSyncUser's redirect the moment a signed-in user's hasOnboarded is
- * still false — never a page someone has to navigate to on purpose.
+ * still false, never a page someone has to navigate to on purpose.
  */
 export default function OnboardingPage() {
   const { authenticated, login, user } = usePrivy();
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
                   How it works
                 </h1>
                 <button
-                  onClick={() => router.replace("/")}
+                  onClick={() => router.replace("/home")}
                   className="text-sm font-medium text-[var(--ink-500)]"
                 >
                   Skip
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
                 ))}
               </motion.div>
 
-              <PrimaryButton onClick={() => router.replace("/")} className="mt-2">
+              <PrimaryButton onClick={() => router.replace("/home")} className="mt-2">
                 Start playing
               </PrimaryButton>
               <SecondaryButton onClick={() => setStep("look")} className="w-full">

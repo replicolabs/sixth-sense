@@ -19,7 +19,7 @@ const DEFAULT_VALUE: AvatarBuilderValue = {
 /**
  * Section 1.1: a single-screen avatar builder with live preview, reachable
  * any time to change your look later. First-time look picking now happens
- * in the real onboarding flow (Section 11.1, apps/web/src/app/onboarding) —
+ * in the real onboarding flow (Section 11.1, apps/web/src/app/onboarding),
  * this screen and that step share AvatarBuilderForm rather than duplicating it.
  */
 export default function AvatarBuilderPage() {
@@ -66,7 +66,7 @@ export default function AvatarBuilderPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pb-10 pt-6">
+    <main className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-10 pt-6 sm:px-6">
       <div className="flex items-center justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--ink-900)]">
           Pick your look

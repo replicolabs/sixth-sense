@@ -14,7 +14,7 @@ interface DemoMatchResponse {
  * Phase 1 ship criterion (CLAUDE.md Section 16): a page that shows real,
  * normalized match events for one real fixture, pulled from
  * /api/scores/historical via packages/txline. Not styled to the Section 10
- * design system yet — that's Phase 4.
+ * design system yet, that's Phase 4.
  */
 export default function DemoMatchPage() {
   const [fixtureId, setFixtureId] = useState("");
@@ -38,7 +38,7 @@ export default function DemoMatchPage() {
   return (
     <main className="mx-auto max-w-2xl p-6 font-sans">
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--ink-900)]">
-        Sixth Sense — Replay data check
+        Sixth Sense: Replay data check
       </h1>
       <p className="mt-2 text-[var(--ink-500)]">
         Pulls one real match from TxLINE&apos;s historical endpoint and prints the normalized

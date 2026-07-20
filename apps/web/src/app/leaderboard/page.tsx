@@ -1,8 +1,9 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Trophy } from "lucide-react";
+import { AppNav } from "@/components/AppNav";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { StreakFlame } from "@/components/ui/StreakFlame";
@@ -68,114 +69,123 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
-      <header className="flex items-center justify-between">
-        <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
-          Leaderboard
-        </span>
-        <Link href="/play" className="text-sm font-medium text-[var(--pine-700)]">
-          Back to live
-        </Link>
-      </header>
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      <AppNav />
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => setTab("global")}
-          className={`flex-1 rounded-[var(--r-pill)] py-2 text-sm font-semibold transition-colors ${
-            tab === "global" ? "bg-[var(--volt-500)] text-[var(--ink-900)]" : "bg-[var(--cream-sunken)] text-[var(--ink-500)]"
-          }`}
-        >
-          Global
-        </button>
-        <button
-          onClick={() => setTab("friends")}
-          className={`flex-1 rounded-[var(--r-pill)] py-2 text-sm font-semibold transition-colors ${
-            tab === "friends" ? "bg-[var(--volt-500)] text-[var(--ink-900)]" : "bg-[var(--cream-sunken)] text-[var(--ink-500)]"
-          }`}
-        >
-          Friends
-        </button>
+      <div className="flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-lg)] bg-[var(--pine-800)]">
+          <Trophy className="h-7 w-7 text-[var(--gold-500)]" strokeWidth={1.75} />
+        </div>
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold text-[var(--ink-900)]">
+            Leaderboard
+          </h1>
+          <p className="text-sm text-[var(--ink-500)]">Every call, ranked. See where you stand.</p>
+        </div>
       </div>
 
-      {tab === "friends" && (
-        <GlassPanel radius="lg" className="p-4">
-          <p className="text-sm font-semibold text-[var(--ink-900)]">Add a friend's code</p>
-          {authenticated && user && (
-            <p className="mt-1 text-xs text-[var(--ink-500)]">
-              Your code: <span className="font-[family-name:var(--font-mono)] font-semibold">{user.id}</span>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className="flex flex-col gap-4 lg:order-1">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTab("global")}
+              className={`flex-1 rounded-[var(--r-pill)] py-2 text-sm font-semibold transition-colors sm:flex-none sm:px-6 ${
+                tab === "global" ? "bg-[var(--volt-500)] text-[var(--ink-900)]" : "bg-[var(--cream-sunken)] text-[var(--ink-500)]"
+              }`}
+            >
+              Global
+            </button>
+            <button
+              onClick={() => setTab("friends")}
+              className={`flex-1 rounded-[var(--r-pill)] py-2 text-sm font-semibold transition-colors sm:flex-none sm:px-6 ${
+                tab === "friends" ? "bg-[var(--volt-500)] text-[var(--ink-900)]" : "bg-[var(--cream-sunken)] text-[var(--ink-500)]"
+              }`}
+            >
+              Friends
+            </button>
+          </div>
+
+          {!authenticated && (
+            <div className="glass-panel flex items-center justify-between gap-3 rounded-[var(--r-md)] px-4 py-2.5">
+              <span className="text-sm text-[var(--ink-700)]">Sign in to see your rank.</span>
+              <PrimaryButton onClick={login} className="px-4 py-1.5 text-sm">
+                Sign in
+              </PrimaryButton>
+            </div>
+          )}
+
+          {rows === null && <p className="text-center text-sm text-[var(--ink-500)]">Loading…</p>}
+          {rows?.length === 0 && (
+            <p className="text-center text-sm text-[var(--ink-500)]">
+              {tab === "friends" ? "Add a friend's code to see them here." : "No one on the board yet. Be the first."}
             </p>
           )}
-          <div className="mt-2 flex gap-2">
-            <input
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addFriendCode()}
-              placeholder="Paste a code"
-              className="flex-1 rounded-[var(--r-md)] border border-[var(--hairline)] bg-[var(--cream-elevated)] px-3 py-2 text-sm text-[var(--ink-900)]"
-            />
-            <PrimaryButton onClick={addFriendCode} className="px-4 py-2 text-sm">
-              Add
-            </PrimaryButton>
-          </div>
-          {friendCodes.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {friendCodes.map((code) => (
-                <button
-                  key={code}
-                  onClick={() => removeFriendCode(code)}
-                  className="rounded-[var(--r-pill)] bg-[var(--cream-sunken)] px-2 py-1 text-xs text-[var(--ink-500)]"
-                  title="Remove"
-                >
-                  {code} ×
-                </button>
-              ))}
-            </div>
-          )}
-        </GlassPanel>
-      )}
 
-      {!authenticated && (
-        <div className="glass-panel flex items-center justify-between rounded-[var(--r-md)] px-4 py-2.5">
-          <span className="text-sm text-[var(--ink-700)]">Sign in to see your rank.</span>
-          <PrimaryButton onClick={login} className="px-4 py-1.5 text-sm">
-            Sign in
-          </PrimaryButton>
+          <ol className="flex flex-col gap-1.5">
+            {rows?.map((row) => (
+              <li
+                key={row.code}
+                className={`flex items-center justify-between rounded-[var(--r-md)] px-4 py-3 ${
+                  row.isMe ? "bg-[var(--volt-500)]/20" : "bg-[var(--cream-sunken)]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-6 text-center font-[family-name:var(--font-mono)] text-sm text-[var(--ink-500)]">
+                    {row.rank}
+                  </span>
+                  <span className={`text-sm ${row.isMe ? "font-semibold" : ""} text-[var(--ink-900)]`}>
+                    {row.nickname}
+                    {row.isMe ? " (you)" : ""}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StreakFlame streak={row.bestStreak} />
+                  <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-[var(--ink-900)]">
+                    {row.points}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-      )}
 
-      {rows === null && <p className="text-center text-sm text-[var(--ink-500)]">Loading…</p>}
-      {rows?.length === 0 && (
-        <p className="text-center text-sm text-[var(--ink-500)]">
-          {tab === "friends" ? "Add a friend's code to see them here." : "No one on the board yet — be the first."}
-        </p>
-      )}
-
-      <ol className="flex flex-col gap-1.5">
-        {rows?.map((row) => (
-          <li
-            key={row.code}
-            className={`flex items-center justify-between rounded-[var(--r-md)] px-4 py-3 ${
-              row.isMe ? "bg-[var(--volt-500)]/20" : "bg-[var(--cream-sunken)]"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="w-6 text-center font-[family-name:var(--font-mono)] text-sm text-[var(--ink-500)]">
-                {row.rank}
-              </span>
-              <span className={`text-sm ${row.isMe ? "font-semibold" : ""} text-[var(--ink-900)]`}>
-                {row.nickname}
-                {row.isMe ? " (you)" : ""}
-              </span>
+        {tab === "friends" && (
+          <GlassPanel radius="lg" className="p-4 lg:order-2">
+            <p className="text-sm font-semibold text-[var(--ink-900)]">Add a friend's code</p>
+            {authenticated && user && (
+              <p className="mt-1 text-xs text-[var(--ink-500)]">
+                Your code: <span className="font-[family-name:var(--font-mono)] font-semibold">{user.id}</span>
+              </p>
+            )}
+            <div className="mt-2 flex gap-2">
+              <input
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addFriendCode()}
+                placeholder="Paste a code"
+                className="flex-1 rounded-[var(--r-md)] border border-[var(--hairline)] bg-[var(--cream-elevated)] px-3 py-2 text-sm text-[var(--ink-900)]"
+              />
+              <PrimaryButton onClick={addFriendCode} className="px-4 py-2 text-sm">
+                Add
+              </PrimaryButton>
             </div>
-            <div className="flex items-center gap-3">
-              <StreakFlame streak={row.bestStreak} />
-              <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-[var(--ink-900)]">
-                {row.points}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ol>
+            {friendCodes.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {friendCodes.map((code) => (
+                  <button
+                    key={code}
+                    onClick={() => removeFriendCode(code)}
+                    className="rounded-[var(--r-pill)] bg-[var(--cream-sunken)] px-2 py-1 text-xs text-[var(--ink-500)]"
+                    title="Remove"
+                  >
+                    {code} ×
+                  </button>
+                ))}
+              </div>
+            )}
+          </GlassPanel>
+        )}
+      </div>
     </main>
   );
 }

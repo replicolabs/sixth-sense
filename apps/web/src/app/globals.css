@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
   /* Canvas (warm cream) */
@@ -46,8 +50,46 @@
   --r-xl: 32px;
   --r-pill: 999px;
 
+  /*
+   * shadcn's semantic tokens, remapped onto Pitch and Cream instead of
+   * shadcn's generic neutral-gray defaults. The whole app is one locked
+   * light theme (no dark mode toggle built, none called for), so .dark
+   * below is left in place unused rather than deleted, matching shadcn's
+   * expected structure for a possible future toggle.
+   */
   --background: var(--cream);
   --foreground: var(--ink-900);
+  --card: var(--cream-elevated);
+  --card-foreground: var(--ink-900);
+  --popover: var(--cream-elevated);
+  --popover-foreground: var(--ink-900);
+  --primary: var(--volt-500);
+  --primary-foreground: var(--ink-900);
+  --secondary: var(--cream-sunken);
+  --secondary-foreground: var(--ink-700);
+  --muted: var(--cream-sunken);
+  --muted-foreground: var(--ink-500);
+  --accent: var(--cream-sunken);
+  --accent-foreground: var(--ink-900);
+  --destructive: var(--loss);
+  --destructive-foreground: var(--cream);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--pine-500);
+  --chart-1: var(--pine-500);
+  --chart-2: var(--volt-500);
+  --chart-3: var(--gold-500);
+  --chart-4: var(--pine-700);
+  --chart-5: var(--ink-500);
+  --radius: var(--r-md);
+  --sidebar: var(--cream-elevated);
+  --sidebar-foreground: var(--ink-900);
+  --sidebar-primary: var(--pine-700);
+  --sidebar-primary-foreground: var(--cream);
+  --sidebar-accent: var(--cream-sunken);
+  --sidebar-accent-foreground: var(--ink-900);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--pine-500);
 }
 
 @theme inline {
@@ -56,11 +98,52 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-bricolage);
+  --font-heading: var(--font-bricolage);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /*
+   * Exact existing scale (Section 10.4), not shadcn's calc-derived
+   * approximation, so shadcn primitives and our own components share one
+   * real radius system rather than two similar-but-different ones.
+   */
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-xl);
+  --radius-3xl: var(--r-xl);
+  --radius-4xl: var(--r-xl);
 }
 
 body {
   background: var(--cream);
-  color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   position: relative;
   min-height: 100%;
@@ -97,19 +180,59 @@ body::after {
 }
 
 /*
- * Light glass panel recipe (Section 10.3), applied over the cream canvas.
- * Use for floating elements — prediction card, nav, toasts, HUD. Keep
- * list content on solid cream (--cream-sunken etc) so it stays readable
- * and so we don't stack more backdrop-filter layers than the page needs.
+ * Liquid Glass material system (Section 10.3), a web approximation of
+ * Apple's platform-native Liquid Glass, since no such thing ships for the
+ * web: real depth needs more than a single blur layer. Every panel gets a
+ * top specular highlight (light hitting the curved top edge) AND a bottom
+ * inner shadow (the underside falling into shadow), which is what makes
+ * glass read as a real, thick, lit object instead of a flat blurred
+ * rectangle painted over the page. `.glass-panel-thick` is the bolder
+ * variant reserved for the single most important floating element on a
+ * screen (the prediction card, a hero panel), CLAUDE.md's own instruction
+ * to give the star element the boldest treatment, not the same glass as
+ * everything else. Use glass for floating elements only; list content
+ * stays on solid cream so it's still readable and so we cap how many
+ * simultaneous backdrop-filter layers a screen pays for.
  */
 .glass-panel {
+  position: relative;
   background: var(--glass-light);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-stroke);
   box-shadow:
     var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(10, 42, 32, 0.06);
+}
+
+.glass-panel-thick {
+  position: relative;
+  background: var(--glass-light);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid var(--glass-stroke);
+  box-shadow:
+    0 16px 48px rgba(10, 42, 32, 0.18),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -12px 24px -16px rgba(10, 42, 32, 0.10);
+}
+
+/* The diagonal sheen: a soft band of light glancing across the panel, not a flat tint. */
+.glass-panel::before,
+.glass-panel-thick::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    122deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0) 78%,
+    rgba(255, 255, 255, 0.10) 100%
+  );
 }
 
 /*
@@ -117,13 +240,55 @@ body::after {
  * (Section 10.3). White text on top.
  */
 .glass-panel-dark {
+  position: relative;
   background: var(--glass-dark);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
     var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -12px 24px -18px rgba(0, 0, 0, 0.35);
+}
+
+.glass-panel-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    122deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0) 78%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+}
+
+/*
+ * Reduced-transparency fallback (design-taste-frontend skill, Section 5):
+ * some users turn off transparency effects system-wide for readability or
+ * motion-sickness reasons. Fall back to a solid, still-branded fill rather
+ * than an unreadable half-blurred panel.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .glass-panel-thick {
+    background: var(--cream-elevated);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass-panel-dark {
+    background: var(--pine-800);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass-panel::before,
+  .glass-panel-thick::before,
+  .glass-panel-dark::before {
+    display: none;
+  }
 }
 
 /*
@@ -157,5 +322,51 @@ body::after {
   }
   50% {
     opacity: 1;
+  }
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }

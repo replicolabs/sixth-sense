@@ -20,7 +20,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Sixth Sense — Call it before it happens",
+  title: "Sixth Sense: Call it before it happens",
   description: "Call the next moment. Build your streak. Provably fair, invisibly on-chain.",
 };
 

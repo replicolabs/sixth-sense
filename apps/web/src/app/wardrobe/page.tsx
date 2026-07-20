@@ -10,6 +10,7 @@ import {
 } from "@sixth-sense/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import { AvatarPreview } from "@/components/AvatarPreview";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -89,7 +90,7 @@ export default function WardrobePage() {
 
   if (!authenticated) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4">
+      <main className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-4 px-4">
         <p className="text-sm text-[var(--ink-500)]">Sign in to see your kits.</p>
         <button
           onClick={login}
@@ -103,7 +104,7 @@ export default function WardrobePage() {
 
   if (!wardrobe || !appearance) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col px-4 pb-10 pt-6">
+      <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 pb-10 pt-6 sm:px-6">
         <p className="text-center text-sm text-[var(--ink-500)]">Loading your kits…</p>
       </main>
     );
@@ -114,7 +115,7 @@ export default function WardrobePage() {
   const natColors = nationalKitColors(wardrobe.nationalityCode ?? "US");
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 pb-10 pt-6 sm:px-6">
       <header className="flex items-center justify-between">
         <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
           Kits
@@ -186,7 +187,7 @@ export default function WardrobePage() {
                 ) : (
                   <div className="relative flex h-8 w-8 items-center justify-center">
                     <ProgressRing fraction={progress} size={32} />
-                    <span className="absolute text-xs">🔒</span>
+                    <Lock className="absolute h-3.5 w-3.5 text-[var(--ink-500)]" strokeWidth={2} />
                   </div>
                 )}
                 <div>

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Coins } from "lucide-react";
+import { AppNav } from "@/components/AppNav";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 
 interface PoolRow {
@@ -19,7 +21,7 @@ interface PoolRow {
 }
 
 // EXPANSION.md Section 4: the staking currency is USDC/USDT-shaped, both
-// 6-decimal tokens — assumed here rather than looked up per-mint on chain,
+// 6-decimal tokens, assumed here rather than looked up per-mint on chain,
 // since this build only ever points pools at one such mint at a time.
 const TOKEN_DECIMALS = 6;
 
@@ -31,7 +33,7 @@ function formatTokenAmount(raw: string): string {
 function statusLabel(status: PoolRow["status"]): string {
   switch (status) {
     case "open":
-      return "Open — join now";
+      return "Open, join now";
     case "locked":
       return "Live";
     case "settled":
@@ -51,30 +53,33 @@ export default function PoolsPage() {
   }, []);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-10 pt-6">
-      <header className="flex items-center justify-between">
-        <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--ink-900)]">
-          Pools
-        </span>
-        <Link href="/play" className="text-sm font-medium text-[var(--pine-700)]">
-          Back to live
-        </Link>
-      </header>
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+      <AppNav />
 
-      <p className="text-sm text-[var(--ink-500)]">
-        Stake on a week of real matches. Everyone plays the same free game — the pool just decides
-        what your score is worth.
-      </p>
+      <div className="flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-lg)] bg-[var(--pine-800)]">
+          <Coins className="h-7 w-7 text-[var(--gold-500)]" strokeWidth={1.75} />
+        </div>
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold text-[var(--ink-900)]">
+            Pools
+          </h1>
+          <p className="text-sm text-[var(--ink-500)]">
+            Stake on a week of real matches. Everyone plays the same free game, the pool just decides what
+            your score is worth.
+          </p>
+        </div>
+      </div>
 
       {pools === null && <p className="text-center text-sm text-[var(--ink-500)]">Loading pools…</p>}
       {pools?.length === 0 && (
         <p className="text-center text-sm text-[var(--ink-500)]">No pools open right now. Check back soon.</p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {pools?.map((pool) => (
           <Link key={pool.poolIdOnChain} href={`/pools/${pool.poolIdOnChain}`}>
-            <GlassPanel radius="lg" className="p-4">
+            <GlassPanel radius="lg" className="p-4 transition-transform hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-500)]">
                   {statusLabel(pool.status)}
