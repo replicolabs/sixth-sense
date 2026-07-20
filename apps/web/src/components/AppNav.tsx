@@ -21,7 +21,7 @@ export function AppNav() {
   const pathname = usePathname();
   return (
     <header className="flex items-center justify-between">
-      <Logo iconSize={24} />
+      <Logo iconSize={24} showText={false} className="text-[var(--ink-900)]" />
       <nav className="flex items-center gap-1 rounded-[var(--r-pill)] p-1 sm:gap-1.5">
         {LINKS.map((link) => {
           const active = pathname === link.href;

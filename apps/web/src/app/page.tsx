@@ -73,9 +73,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--pine-900)] via-[var(--pine-900)]/35 to-transparent" />
 
         <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-4 pt-6 sm:px-8 lg:px-12">
-          <span className="text-[var(--cream)]">
-            <Logo href="/" iconSize={24} />
-          </span>
+          <Logo href="/" iconSize={24} className="text-[var(--cream)]" />
           {!authenticated && (
             <button
               onClick={login}

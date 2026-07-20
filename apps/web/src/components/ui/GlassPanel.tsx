@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 // Tailwind's compiler statically scans source for complete class name
 // strings, it can't resolve a template-literal-interpolated class like
@@ -35,7 +36,5 @@ export function GlassPanel({
   radius?: keyof typeof RADIUS_CLASSES;
   className?: string;
 }) {
-  return (
-    <div className={`${VARIANT_CLASSES[variant]} ${RADIUS_CLASSES[radius]} ${className}`}>{children}</div>
-  );
+  return <div className={cn(VARIANT_CLASSES[variant], RADIUS_CLASSES[radius], className)}>{children}</div>;
 }

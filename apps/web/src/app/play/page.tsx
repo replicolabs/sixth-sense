@@ -131,7 +131,7 @@ function PlayPageInner() {
       <MilestoneBanner />
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Logo iconSize={22} />
+          <Logo iconSize={22} showText={false} className="text-[var(--ink-900)]" />
           {liveFixtureId && <LiveTag />}
           {classicsFixtureId && (
             <span className="ml-1 rounded-[var(--r-pill)] bg-[var(--cream-sunken)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-500)]">

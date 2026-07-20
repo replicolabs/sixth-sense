@@ -28,11 +28,29 @@ export function LogoMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function Logo({ href = "/", iconSize = 26 }: { href?: string; iconSize?: number }) {
+export function Logo({
+  href = "/",
+  iconSize = 26,
+  showText = true,
+  className = "",
+}: {
+  href?: string;
+  iconSize?: number;
+  /** Interior app screens show the mark alone. Only the landing page keeps the wordmark. */
+  showText?: boolean;
+  className?: string;
+}) {
   return (
-    <Link href={href} className="flex items-center gap-2 text-[var(--ink-900)]">
+    // No hardcoded text color here on purpose: this mark is used on both
+    // the cream home screens (wants ink-900) and the dark landing hero
+    // (wants cream). A color set here would win over any ancestor's
+    // color via inheritance rules regardless of what wraps it, so the
+    // caller's own text color is what applies instead.
+    <Link href={href} className={`flex items-center gap-2 ${className}`}>
       <LogoMark size={iconSize} />
-      <span className="font-[family-name:var(--font-display)] text-lg font-bold">Sixth Sense</span>
+      {showText && (
+        <span className="font-[family-name:var(--font-display)] text-lg font-bold">Sixth Sense</span>
+      )}
     </Link>
   );
 }
