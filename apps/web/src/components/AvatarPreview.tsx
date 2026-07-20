@@ -43,18 +43,10 @@ export function AvatarPreview({
       {/* head */}
       <circle cx="80" cy="75" r="42" fill={skin} />
 
-      {/* facial hair */}
-      {facialHair === "stubble" && <circle cx="80" cy="90" r="30" fill={hair} opacity="0.15" />}
-      {facialHair === "short-beard" && (
-        <path d="M48 80 Q80 130 112 80 Q112 105 80 112 Q48 105 48 80 Z" fill={hair} opacity="0.9" />
-      )}
-      {facialHair === "full-beard" && (
-        <path d="M42 72 Q80 140 118 72 Q120 110 80 118 Q40 110 42 72 Z" fill={hair} />
-      )}
-      {facialHair === "mustache" && (
-        <path d="M62 88 Q80 96 98 88 Q90 94 80 94 Q70 94 62 88 Z" fill={hair} />
-      )}
-      {facialHair === "goatee" && <path d="M65 98 Q80 118 95 98 Q95 108 80 112 Q65 108 65 98 Z" fill={hair} />}
+      {/* Facial hair is removed for now (kept as a no-op, not deleted, in case
+          it comes back later): the facialHair prop is still accepted so
+          callers and the stored data model don't need to change, it's just
+          never rendered. */}
 
       {/* eyes */}
       <circle cx="65" cy="72" r="4" fill="var(--ink-900)" />

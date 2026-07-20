@@ -22,3 +22,5 @@ test-ledger
 **/*.rs.bk
 CLAUDE.md
 EXPANSION.md
+docs/
+DEMO_SCRIPT.md

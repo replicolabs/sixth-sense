@@ -4,7 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, History, Coins } from "lucide-react";
+import { Trophy, History, Coins, LogOut } from "lucide-react";
 import type { FixtureInfo } from "@sixth-sense/shared";
 import { AppNav } from "@/components/AppNav";
 import { GlassPanel } from "@/components/ui/GlassPanel";
@@ -23,6 +23,15 @@ interface LiveFixturesResponse {
   live: FixtureInfo[];
   upcoming: FixtureInfo[];
 }
+
+// The upcoming list has no cap on the server (any real fixture TxLINE
+// returns should be visible, whenever it kicks off), but rendering an
+// unbounded list on the page itself is a different problem: a "Starting
+// soon" section with fifty rows in it is not quality, it is a wall.
+// Capped here on the client, with a show more expansion, rather than
+// real server side pagination, since the whole list is already one
+// small fetch either way.
+const UPCOMING_PAGE_SIZE = 6;
 
 function MatchRow({ fixture, kickoffLabel }: { fixture: FixtureInfo; kickoffLabel?: string }) {
   return (
@@ -59,9 +68,10 @@ function MatchRow({ fixture, kickoffLabel }: { fixture: FixtureInfo; kickoffLabe
  * width and uses its own internal grid instead.
  */
 export default function AppHomePage() {
-  const { authenticated, login, user } = usePrivy();
+  const { authenticated, login, logout, user } = usePrivy();
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [fixtures, setFixtures] = useState<LiveFixturesResponse | null>(null);
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
 
   useEffect(() => {
     if (!authenticated || !user) {
@@ -99,17 +109,20 @@ export default function AppHomePage() {
 
   const hasLive = !!fixtures?.live.length;
   const hasUpcoming = !!fixtures?.upcoming.length;
+  const upcomingToShow = showAllUpcoming
+    ? (fixtures?.upcoming ?? [])
+    : (fixtures?.upcoming ?? []).slice(0, UPCOMING_PAGE_SIZE);
+  const hiddenUpcomingCount = (fixtures?.upcoming.length ?? 0) - upcomingToShow.length;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 pb-20 pt-6 sm:px-6 lg:px-10">
       <AppNav />
 
-      {/* Status row: greeting/streak on the left, provably-fair note on the right. Full width, never a squeezed side panel. */}
+      {/* Status row: full width on every viewport, this is the only panel here now. */}
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]"
       >
         {authenticated ? (
           <GlassPanel radius="lg" className="flex items-center justify-between gap-4 px-6 py-5">
@@ -123,7 +136,23 @@ export default function AppHomePage() {
                 </p>
               )}
             </div>
-            <StreakFlame streak={profile?.bestStreak ?? 0} />
+            <div className="flex items-center gap-4">
+              <StreakFlame streak={profile?.bestStreak ?? 0} />
+              <button
+                onClick={() => {
+                  // Drop the profile we already loaded for this session
+                  // immediately, rather than leaving a signed out screen
+                  // briefly showing a signed in person's name and stats.
+                  setProfile(null);
+                  logout();
+                }}
+                className="flex items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-xs font-medium text-[var(--ink-500)] transition-colors hover:bg-[var(--cream-sunken)] hover:text-[var(--ink-700)]"
+                title="Log out"
+              >
+                <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
+                Log out
+              </button>
+            </div>
           </GlassPanel>
         ) : (
           <GlassPanel radius="lg" className="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
@@ -172,19 +201,32 @@ export default function AppHomePage() {
 
         {hasUpcoming && (
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-500)]">Starting soon</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-500)]">Starting soon</p>
+              <span className="text-xs text-[var(--ink-400)]">{fixtures!.upcoming.length} total</span>
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {fixtures!.upcoming.map((f) => (
+              {upcomingToShow.map((f) => (
                 <MatchRow
                   key={f.fixtureId}
                   fixture={f}
-                  kickoffLabel={new Date(f.startTime).toLocaleTimeString([], {
+                  kickoffLabel={new Date(f.startTime).toLocaleString([], {
+                    month: "short",
+                    day: "numeric",
                     hour: "numeric",
                     minute: "2-digit",
                   })}
                 />
               ))}
             </div>
+            {hiddenUpcomingCount > 0 && (
+              <button
+                onClick={() => setShowAllUpcoming(true)}
+                className="mx-auto mt-1 text-sm font-medium text-[var(--pine-700)] hover:underline"
+              >
+                Show {hiddenUpcomingCount} more
+              </button>
+            )}
           </div>
         )}
 

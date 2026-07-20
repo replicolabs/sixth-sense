@@ -1,6 +1,6 @@
 "use client";
 
-import { SKIN_TONES, HAIR_STYLES, HAIR_COLORS, FACIAL_HAIR_STYLES, PRESENTATION_OPTIONS } from "@sixth-sense/shared";
+import { SKIN_TONES, HAIR_STYLES, HAIR_COLORS, PRESENTATION_OPTIONS } from "@sixth-sense/shared";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
@@ -11,7 +11,7 @@ const DEFAULT_VALUE: AvatarBuilderValue = {
   skinTone: SKIN_TONES[4].id,
   hairStyle: HAIR_STYLES[2].id,
   hairColor: HAIR_COLORS[0].id,
-  facialHair: FACIAL_HAIR_STYLES[0].id,
+  facialHair: "none", // beards removed for now (may come back later)
   presentation: PRESENTATION_OPTIONS[2].id,
   nationalityCode: "US",
 };
@@ -40,7 +40,7 @@ export default function AvatarBuilderPage() {
           skinTone: avatar.skinTone,
           hairStyle: avatar.hairStyle,
           hairColor: avatar.hairColor,
-          facialHair: avatar.facialHair,
+          facialHair: "none", // beards removed for now, ignore whatever a previously saved avatar had
           presentation: avatar.presentation,
           nationalityCode: avatar.nationalityCode,
         });

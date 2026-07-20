@@ -9,7 +9,7 @@ import { useEffect, useRef } from "react";
  * Fires once per session right after a Solana embedded wallet exists,
  * upserting the User row via /api/users/sync. Also the one place that
  * decides whether a signed-in user needs the real onboarding flow
- * (Section 11.1) — mounted globally via AuthSync in PrivyProviders, so
+ * (Section 11.1), mounted globally via AuthSync in PrivyProviders, so
  * this check runs no matter which page someone lands on after login,
  * rather than needing the same check duplicated on every page.
  */
@@ -21,7 +21,15 @@ export function useSyncUser() {
   const synced = useRef(false);
 
   useEffect(() => {
-    if (!authenticated || !user || wallets.length === 0 || synced.current) return;
+    // Reset on logout, not just on a successful sync, so signing out and
+    // back in within the same tab re-syncs the new session instead of
+    // silently skipping it because a previous login already flipped this
+    // ref once.
+    if (!authenticated) {
+      synced.current = false;
+      return;
+    }
+    if (!user || wallets.length === 0 || synced.current) return;
     synced.current = true;
 
     fetch("/api/users/sync", {

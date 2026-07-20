@@ -11,8 +11,12 @@ import { NextResponse } from "next/server";
 // RawFixtureSnapshotItem). A match is "live" here if it kicked off in the
 // past but not more than this long ago.
 const LIVE_WINDOW_MS = 150 * 60 * 1000;
-// How far ahead to surface a match as "starting soon" on the home screen.
-const UPCOMING_WINDOW_MS = 48 * 60 * 60 * 1000;
+// No cap on how far ahead an upcoming match can be. TxLINE's fixture
+// snapshot already isn't limited to one competition (confirmed against
+// real devnet data: it returns friendlies alongside World Cup fixtures
+// with no filtering needed), and the fixtures it happens to return can sit
+// months out, so any window here would just hide real matches for no
+// reason. If the list ever gets too long to be useful, revisit this.
 
 function loadServiceWallet(): Keypair | null {
   const raw = process.env.TXLINE_SERVICE_WALLET_SECRET;
@@ -50,7 +54,7 @@ export async function GET() {
     const sinceStart = now - startMs;
     if (sinceStart >= 0 && sinceStart <= LIVE_WINDOW_MS) {
       live.push(fixture);
-    } else if (sinceStart < 0 && -sinceStart <= UPCOMING_WINDOW_MS) {
+    } else if (sinceStart < 0) {
       upcoming.push(fixture);
     }
   }

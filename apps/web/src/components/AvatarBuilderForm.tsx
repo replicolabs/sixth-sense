@@ -1,6 +1,5 @@
 import {
   COUNTRIES,
-  FACIAL_HAIR_STYLES,
   HAIR_COLORS,
   HAIR_STYLES,
   PRESENTATION_OPTIONS,
@@ -28,7 +27,7 @@ interface AvatarBuilderFormProps {
 /**
  * The avatar builder's fields + live preview, shared by the standalone
  * `/avatar` edit screen and onboarding's "Pick your look" step (Section
- * 11.1) — one source of truth for the form instead of two copies drifting
+ * 11.1), one source of truth for the form instead of two copies drifting
  * apart. Callers own persistence (each screen saves differently: the edit
  * screen has its own explicit Save button and fetch-on-mount; onboarding
  * saves once at the end of the wizard).
@@ -57,12 +56,6 @@ export function AvatarBuilderForm({ value, onChange, equippedKitId = null }: Ava
       <SwatchOptionRow title="Skin tone" options={SKIN_TONES} value={value.skinTone} onChange={set("skinTone")} />
       <LabelOptionRow title="Hair" options={HAIR_STYLES} value={value.hairStyle} onChange={set("hairStyle")} />
       <SwatchOptionRow title="Hair color" options={HAIR_COLORS} value={value.hairColor} onChange={set("hairColor")} />
-      <LabelOptionRow
-        title="Facial hair"
-        options={FACIAL_HAIR_STYLES}
-        value={value.facialHair}
-        onChange={set("facialHair")}
-      />
       <LabelOptionRow
         title="Presentation"
         options={PRESENTATION_OPTIONS}
