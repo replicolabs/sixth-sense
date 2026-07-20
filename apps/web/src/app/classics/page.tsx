@@ -125,9 +125,13 @@ export default function ClassicsPage() {
       )}
 
       {matches !== null && matches.length === 0 && (
-        <p className="text-center text-sm text-[var(--ink-500)]">
-          No matches found. Try a different search.
-        </p>
+        <GlassPanel radius="lg" className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+          <History className="h-8 w-8 text-[var(--ink-400)]" strokeWidth={1.5} />
+          <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink-900)]">
+            No matches found
+          </p>
+          <p className="max-w-sm text-sm text-[var(--ink-500)]">Try a different search or clear the filter.</p>
+        </GlassPanel>
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

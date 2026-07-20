@@ -1,6 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
 import { AppNav } from "@/components/AppNav";
@@ -84,7 +85,11 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      <div
+        className={`grid grid-cols-1 gap-6 lg:items-start ${
+          tab === "friends" ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""
+        }`}
+      >
         <div className="flex flex-col gap-4 lg:order-1">
           <div className="flex gap-2">
             <button
@@ -115,38 +120,54 @@ export default function LeaderboardPage() {
           )}
 
           {rows === null && <p className="text-center text-sm text-[var(--ink-500)]">Loading…</p>}
+
           {rows?.length === 0 && (
-            <p className="text-center text-sm text-[var(--ink-500)]">
-              {tab === "friends" ? "Add a friend's code to see them here." : "No one on the board yet. Be the first."}
-            </p>
+            <GlassPanel radius="lg" className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+              <Trophy className="h-8 w-8 text-[var(--ink-400)]" strokeWidth={1.5} />
+              <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink-900)]">
+                {tab === "friends" ? "No friends added yet" : "No one on the board yet"}
+              </p>
+              <p className="max-w-sm text-sm text-[var(--ink-500)]">
+                {tab === "friends"
+                  ? "Paste a friend's code to see them here."
+                  : "Play a match and be the first name on this board."}
+              </p>
+              {tab === "global" && (
+                <Link href="/play" className="mt-2">
+                  <PrimaryButton className="px-5 py-2 text-sm">Play now</PrimaryButton>
+                </Link>
+              )}
+            </GlassPanel>
           )}
 
-          <ol className="flex flex-col gap-1.5">
-            {rows?.map((row) => (
-              <li
-                key={row.code}
-                className={`flex items-center justify-between rounded-[var(--r-md)] px-4 py-3 ${
-                  row.isMe ? "bg-[var(--volt-500)]/20" : "bg-[var(--cream-sunken)]"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-6 text-center font-[family-name:var(--font-mono)] text-sm text-[var(--ink-500)]">
-                    {row.rank}
-                  </span>
-                  <span className={`text-sm ${row.isMe ? "font-semibold" : ""} text-[var(--ink-900)]`}>
-                    {row.nickname}
-                    {row.isMe ? " (you)" : ""}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <StreakFlame streak={row.bestStreak} />
-                  <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-[var(--ink-900)]">
-                    {row.points}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
+          {rows && rows.length > 0 && (
+            <ol className="grid grid-cols-1 gap-1.5 lg:grid-cols-2">
+              {rows.map((row) => (
+                <li
+                  key={row.code}
+                  className={`flex items-center justify-between rounded-[var(--r-md)] px-4 py-3 ${
+                    row.isMe ? "bg-[var(--volt-500)]/20" : "bg-[var(--cream-sunken)]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 text-center font-[family-name:var(--font-mono)] text-sm text-[var(--ink-500)]">
+                      {row.rank}
+                    </span>
+                    <span className={`text-sm ${row.isMe ? "font-semibold" : ""} text-[var(--ink-900)]`}>
+                      {row.nickname}
+                      {row.isMe ? " (you)" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <StreakFlame streak={row.bestStreak} />
+                    <span className="font-[family-name:var(--font-mono)] text-sm font-semibold text-[var(--ink-900)]">
+                      {row.points}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         {tab === "friends" && (

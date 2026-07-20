@@ -25,8 +25,8 @@ const LOOP_STEPS = [
   {
     title: "Build your streak",
     body: "Get it right and your streak grows. Miss one and you start over.",
-    image: null,
-    imageAlt: "",
+    image: "/images/haaland-city.png",
+    imageAlt: "Haaland celebrating",
   },
 ];
 

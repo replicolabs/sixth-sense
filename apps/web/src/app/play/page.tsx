@@ -154,7 +154,7 @@ function PlayPageInner() {
 
       {!authenticated && (
         <div className="glass-panel flex items-center justify-between rounded-[var(--r-md)] px-4 py-2.5">
-          <span className="text-sm text-[var(--ink-700)]">Sign in to save your streaks and unlocks.</span>
+          <span className="text-sm text-[var(--ink-700)]">Save your progress</span>
           <PrimaryButton onClick={login} className="px-4 py-1.5 text-sm">
             Sign in
           </PrimaryButton>

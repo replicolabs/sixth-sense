@@ -73,9 +73,18 @@ export default function PoolsPage() {
 
       {pools === null && <p className="text-center text-sm text-[var(--ink-500)]">Loading pools…</p>}
       {pools?.length === 0 && (
-        <p className="text-center text-sm text-[var(--ink-500)]">No pools open right now. Check back soon.</p>
+        <GlassPanel radius="lg" className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+          <Coins className="h-8 w-8 text-[var(--ink-400)]" strokeWidth={1.5} />
+          <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink-900)]">
+            No pools open right now
+          </p>
+          <p className="max-w-sm text-sm text-[var(--ink-500)]">
+            New gameweeks open regularly. Check back soon, or play a free match while you wait.
+          </p>
+        </GlassPanel>
       )}
 
+      {pools && pools.length > 0 && (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {pools?.map((pool) => (
           <Link key={pool.poolIdOnChain} href={`/pools/${pool.poolIdOnChain}`}>
@@ -99,6 +108,7 @@ export default function PoolsPage() {
           </Link>
         ))}
       </div>
+      )}
     </main>
   );
 }
