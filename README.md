@@ -6,6 +6,12 @@ Sixth Sense is a live, second screen football prediction game. Every 30 to 90 se
 
 This is a real, working product, not a demo shell. Every integration in this repository talks to the real thing: a real third party sports data feed (TxLINE, backed by TxOracle's on chain Merkle proofs), a real deployed Solana program, a real Postgres database, and real invisible embedded wallets through Privy. Nothing is mocked. Where a live dependency could not be reached during development (for example, no World Cup match happens to be live at the exact moment you are reading this), the code still does the real thing against real cached data rather than faking a result.
 
+## Demo video
+
+[![Watch the Sixth Sense demo](https://img.youtube.com/vi/lFGyHs8a-8w/maxresdefault.jpg)](https://youtu.be/lFGyHs8a-8w)
+
+Can't see the embed above, or prefer to watch another way? [View the demo video on Google Drive](https://drive.google.com/drive/folders/1WvIWTfFylTnfZZely5PGWV6FBfZ0CKNr).
+
 ## Table of contents
 
 - [What is actually built](#what-is-actually-built)
