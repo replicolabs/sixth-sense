@@ -133,13 +133,6 @@ export default function AppHomePage() {
             </PrimaryButton>
           </GlassPanel>
         )}
-
-        <GlassPanel radius="lg" className="flex flex-col justify-center px-6 py-5">
-          <p className="text-sm font-semibold text-[var(--ink-900)]">Provably fair</p>
-          <p className="mt-1 text-xs text-[var(--ink-500)]">
-            Every call settles against real match data on chain. Always.
-          </p>
-        </GlassPanel>
       </motion.section>
 
       {/* Play now: the single biggest, boldest card on the page. */}
