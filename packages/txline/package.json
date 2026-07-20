@@ -8,7 +8,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./pool-instructions": "./src/pool-instructions.ts",
-    "./pool-pdas": "./src/pool-pdas.ts"
+    "./pool-pdas": "./src/pool-pdas.ts",
+    "./client": "./src/client.ts",
+    "./auth": "./src/auth.ts",
+    "./config": "./src/config.ts",
+    "./normalize": "./src/normalize.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

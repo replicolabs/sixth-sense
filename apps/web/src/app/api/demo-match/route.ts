@@ -1,11 +1,11 @@
-import {
-  getOrActivateSession,
-  getFixturesSnapshot,
-  getScoresHistorical,
-  loadTxLineConfig,
-  normalizeFixtureSnapshot,
-  normalizeScoresEvent,
-} from "@sixth-sense/txline";
+// Imported from these specific subpaths, not the "@sixth-sense/txline"
+// package root. See apps/web/src/app/api/fixtures/live/route.ts for why:
+// the root barrel also re-exports Anchor-dependent modules that crash under
+// Vercel's runtime with ERR_REQUIRE_ESM, and this route never touches Anchor.
+import { getOrActivateSession } from "@sixth-sense/txline/auth";
+import { getFixturesSnapshot, getScoresHistorical } from "@sixth-sense/txline/client";
+import { loadTxLineConfig } from "@sixth-sense/txline/config";
+import { normalizeFixtureSnapshot, normalizeScoresEvent } from "@sixth-sense/txline/normalize";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 import { NextResponse } from "next/server";

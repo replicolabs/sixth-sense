@@ -1,4 +1,15 @@
-import { getFixturesSnapshot, getOrActivateSession, loadTxLineConfig, normalizeFixtureSnapshot } from "@sixth-sense/txline";
+// Imported from these specific subpaths, not the "@sixth-sense/txline"
+// package root, deliberately. The root barrel (src/index.ts) re-exports
+// pool-chain.ts and settlement-worker.ts too, which pull in @coral-xyz/anchor.
+// Anchor is marked serverExternalPackages in next.config.ts (needed by the
+// pool routes), which means Vercel's runtime require()s it raw instead of
+// bundling it, and its rpc-websockets dependency then fails with
+// ERR_REQUIRE_ESM trying to require() the ESM-only uuid package. This route
+// never touches Anchor, so it must not import anything that does.
+import { getFixturesSnapshot } from "@sixth-sense/txline/client";
+import { getOrActivateSession } from "@sixth-sense/txline/auth";
+import { loadTxLineConfig } from "@sixth-sense/txline/config";
+import { normalizeFixtureSnapshot } from "@sixth-sense/txline/normalize";
 import type { FixtureInfo } from "@sixth-sense/shared";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
